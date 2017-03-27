@@ -1,0 +1,23 @@
+{
+  "name": "streamyjs",
+  "version": "0.0.1",
+  "description": "An array manipulation tool to map,filter,reduce as a stream aggregation.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./build/ts/test/"
+  },
+  "keywords": [
+    "Array",
+    "filter",
+    "map",
+    "reduce",
+    "aggregation"
+  ],
+  "author": "Akash Kurian Jose",
+  "license": "ISC",
+
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  }
+}
