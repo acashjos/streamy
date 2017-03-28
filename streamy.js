@@ -1,32 +1,39 @@
 /*
 TODO:
 
-#1
-	each chaining return a partial application. 
-	issue with current design:
-		var i = streamy(arr);
-		i.fill(9)
-		i.fill(5)  // same as streamy(arr).fill(9).fill(5)
-		i.fill(9)()
-		i.fill(5)	// breaks loop linearity
-	This is unintuitive. By returning partial application the behaviour changes to 
-		i.fill(9)  // => streamy(arr).fill(9)
-		var j = i.fill(5)  // => streamy(arr).fill(5)
-		j.fill(9)() // => streamy(arr).fill(5).fill(9)()
-		i.fill(4)  // => streamy(arr).fill(4) loop linearity is not broken.
+#1 - DONE
+CLONES
+each chaining return partial application which I call clones
 
 #2
-every predicate will get an apply(index) method as parameter just before exit()
-apply(index) will apply operations at each stage to `array[index]` all the way to stage just before current.
-these values will be cached so it doesn't need to be re-executed
-if the process loop has passed `array[index]` , then cached value will be returned;
+LOOKAHEAD
+every predicate will get a lookahead(index) method as parameter just before stopNow()
+lookahead(index) will pause current loop and  start a new loop from current base index until it figure out prev_stage_result_array[index]. All values calculated during lookahead is cached for use in the main loop when resumed
+
+NB: This can impact  performance. But I hope it won't be as bad as native
+NB: This can impact memory use
 NB: THIS IS NOT A REPLACEMENT FOR THE `index` AND `array` PARAMETERS PASSED WITH PREDICATE.
+
+#3
+INTERMEDIATE STATE CACHING
+For implementing lookahead, it is required to cache every intermediate value. 
+But the real catch is that during the final exec() call, a (useCache: boolean) parameter can be passed
+This will cause the execution of every Clone to use cache from previous execution. 
+		var i = streamy(arr).map( i=> i*2); 	//does nothing
+		i.fill(9)  // does nothing
+		var j = i.fill(5)  // does nothing
+		j.fill(9)() // cache generated for `i` and `j`
+		j(useCache:true)  // will simply return cached version of arr.map( i=> i*2).fill(5) 
+		i(useCache:true)  // will simply return cached version of arr.map( i=> i*2)
+		i() // will regenerate cache for `i`
 */
 
-function streamy(array){
+function streamy(array, sequence){
+	if(sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
+	sequence = sequence || [];
 	var context = {
 		array: array,
-		sequence: [],
+		sequence: sequence,
 		exec: function () {
 			var array = context.array;
 			var arrayLen = array.length;
@@ -38,9 +45,9 @@ function streamy(array){
 			var singleValue = false;
 			var pass, skip, key, predicate, modifier, args;
 			var stopIteration = false;
-			var frugal = true; // frugal flag will break execution when exit() is called
+			var frugal = true; // frugal flag will break execution when stopNow() is called
 
-			function exit(){
+			function stopNow(){
 				stopIteration = frugal && true;
 			}
 			for( var i=0; i<arrayLen; ++i, ++resultPointer) {
@@ -63,7 +70,7 @@ function streamy(array){
 						// 	break;
 						// }
 						case "filter":{
-							if(!predicate.call(modifier,pass,i,array,exit)){
+							if(!predicate.call(modifier,pass,i,array,stopNow)){
 								j = seqLen; // break after this iteration
 								skip = true;
 								resultPointer--;
@@ -71,12 +78,12 @@ function streamy(array){
 							break;
 						}
 						case "forEach":{
-							frugal = false;	// frugal causes to stop iteration on exit(). this will affect foreach
-							predicate.call(modifier,pass,i,array,exit)
+							frugal = false;	// frugal causes to stop iteration on stopNow(). this will affect foreach
+							predicate.call(modifier,pass,i,array,stopNow)
 							break;
 						}
 						case "map":{
-							pass = predicate.call(modifier,pass,i,array,exit)
+							pass = predicate.call(modifier,pass,i,array,stopNow)
 							break;
 						}
 
@@ -92,7 +99,7 @@ function streamy(array){
 								accumulate = modifier;
 							}
 							
-							accumulate = predicate(accumulate,pass,i,array,exit)
+							accumulate = predicate(accumulate,pass,i,array,stopNow)
 							break;
 						}
 					}
@@ -119,7 +126,7 @@ function streamy(array){
 	Object.defineProperty(context.exec,"find" , {value: findReduce.bind(context) })
 	Object.defineProperty(context.exec,"findIndex" , {value: findIndexReduce.bind(context) })
 	Object.defineProperty(context.exec,"join" , {value: joinReduce.bind(context) })
-	 Object.defineProperty(context.exec,"some" , {value: someReduce.bind(context) })
+	Object.defineProperty(context.exec,"some" , {value: someReduce.bind(context) })
 	
 // chainable
 	
@@ -138,8 +145,9 @@ function appendOperation (key,predicate,modifier) {
 	if(key === "reduce" && arguments.length < 3 && this.array.length == 0) {
 		throw new TypeError('Reduce of empty array with no initial value');
 	}
-	this.sequence.push([key,predicate,modifier,arguments])
-	return this.exec;
+	let sequence = this.sequence.slice()
+	sequence.push([key,predicate,modifier,arguments])
+	return streamy(this.array, sequence); //*/ this.exec;
 }
 /*
 *		Pseudo Map operations
@@ -156,8 +164,8 @@ function fillMap (value, start, end) {
 function sliceFilter (begin,end) {
 	begin = begin || 0
 	end = end || this.array.length
-	return this.appendOperation( "filter", ( element, index, array, exit ) => {
-		if(index === end) exit();
+	return this.appendOperation( "filter", ( element, index, array, stopNow ) => {
+		if(index === end) stopNow();
 		return (begin <= index && index < end)
 	} )
 }
@@ -173,20 +181,20 @@ function everyReduce (predicate) {
 }
 function findReduce (predicate) {
 	
-	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, exit ) => {
+	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, stopNow ) => {
 		if(accumulator !== undefined) return accumulator;
 		if(predicate(currentValue, currentIndex, array)){
-			exit();
+			stopNow();
 			return currentValue
 		}
 	}, undefined )
 }
 function findIndexReduce (predicate) {
 	
-	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, exit ) => {
+	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, stopNow ) => {
 		if(accumulator > -1) return accumulator;
 		if(predicate(currentValue, currentIndex, array)){
-			exit();
+			stopNow();
 			return currentIndex
 		}
 		return -1;
@@ -200,9 +208,9 @@ function joinReduce (separator) {
 
 function someReduce (predicate) {
 	
-	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, exit ) => {
+	return this.appendOperation( "reduce", ( accumulator, currentValue, currentIndex, array, stopNow ) => {
 		if(predicate(currentValue, currentIndex, array)){
-			exit();
+			stopNow();
 			return true;
 		}
 		return accumulator || false;
