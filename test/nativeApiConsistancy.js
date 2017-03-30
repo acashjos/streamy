@@ -200,7 +200,6 @@ describe(".forEach()", () => {
 		function each(element, index, array) { 
 			this.element = element
 			this.index = index
-			this.array = array
 		} 
 		a.forEach(each, nativeResult)
 		streamy(a).forEach(each, streamyResult)()
@@ -391,5 +390,16 @@ describe(".some()", () => {
 		expect(checkStreamy(fruits, 'banana'),"should equal  true").to.equal(checkNative(fruits, 'banana'))
 
 		
+	})
+})
+
+// composit operations
+
+describe("Filter and Slice", () => {
+	it("should 1st map and then slice", ()=> {
+
+		var arr = Array.from(Array(100)).map((x, i) => i)
+		let op = streamy(arr).filter( i => i%2).slice(8,24)
+		expect(op()).to.deep.equal(arr.filter( i => i%2).slice(8,24))
 	})
 })

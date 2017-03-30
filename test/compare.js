@@ -2,7 +2,7 @@
 // setup
 
 let streamy = require("../").streamy	// my module
-var caseLen = 1000
+var caseLen = 100000
 var repeatTest = 1
 let arr1 = Array.from(Array(caseLen)).map((x, i) => i) //array [1,2,3,4....., caseLen]
 
@@ -21,7 +21,7 @@ for (var i = 0; i < repeatTest; ++i)
       .filter(item => (item % 2))
       .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
-    // o1.reduce( (i,j) => i+j)
+    o1.reduce( (i,j) => i+j)
 console.log("Normal ops: %d ms", Date.now() - t1)
 
 
@@ -42,7 +42,7 @@ let ops = streamy(arr1)
     .filter(item => (item % 2))
     .fill(6, 4900, 4990)
     .forEach(item => external.push(item))
-    // .reduce( (i,j) => i+j)
+    .reduce( (i,j) => i+j)
 // repeats operation 1000 times => 1000 * ops(caseLen)
 for (var i = 0; i < repeatTest; ++i)
     o2 = ops()

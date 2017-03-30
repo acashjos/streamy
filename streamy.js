@@ -67,26 +67,31 @@ function streamy(array, sequence) {
 module.exports = streamy;
 
 function exec(context) {
+	
 	var array = context.array;
 	var arrayLen = array.length;
 	var sequence = context.sequence;
 	var seqLen = sequence.length;
 	var result = [];
-	var resultPointer = 0;
+	var resultPointer;
 	var accumulate;
 	var singleValue = false;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
 	var frugal = true; // frugal flag will break execution when stopNow() is called
+	var stageIndex = [];
 
 	function stopNow() {
 		stopIteration = frugal && true;
 	}
-	for (var i = 0; i < arrayLen; ++i, ++resultPointer) {
+	for (var i = 0; i < arrayLen; ++i) {
 		pass = array[i]
 		skip = false;
-		for (var j = 0; j < seqLen; ++j) {
 
+		for (var j = 0; j < seqLen; ++j) {
+			
+			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j]
+			stageIndex[j] += 1
 			// if(chainBreak) throw new TypeError('Non-iterable stages are not chainable');
 			key = sequence[j][0]
 			predicate = sequence[j][1]
@@ -95,43 +100,36 @@ function exec(context) {
 
 			switch (key) {
 
-				// case "fill":{
-				// 	var st = args[2] || 0, end = args[3] || arrayLen;
-				// 	if(st <= resultPointer && resultPointer < end)
-				// 		pass = sequence[j][1]
-				// 	break;
-				// }
 				case "filter": {
-					if (!predicate.call(modifier, pass, i, array, stopNow)) {
-						j = seqLen; // break after this iteration
+					if (!predicate.call(modifier, pass, stageIndex[j], stopNow)) {
 						skip = true;
-						resultPointer--;
+						// stageIndex[j]--;
+						j = seqLen; // break after this iteration
 					}
 					break;
 				}
 				case "forEach": {
 					frugal = false;	// frugal causes to stop iteration on stopNow(). this will affect foreach
-					predicate.call(modifier, pass, i, array, stopNow)
+					predicate.call(modifier, pass, stageIndex[j], stopNow)
 					break;
 				}
 				case "map": {
-					pass = predicate.call(modifier, pass, i, array, stopNow)
+					pass = predicate.call(modifier, pass, stageIndex[j], stopNow)
 					break;
 				}
 
 				case "reduce": {
-					j = seqLen; // break after this iteration
 					skip = true;
 					singleValue = true;
-					if (resultPointer === 0) {
+					if (stageIndex[j] === 0) {
 						if (args.length < 3) {
 							accumulate = pass;
 							break;
 						}
 						accumulate = modifier;
 					}
-
-					accumulate = predicate(accumulate, pass, i, array, stopNow)
+					accumulate = predicate(accumulate, pass, stageIndex[j], stopNow)
+					j = seqLen; // break after this iteration
 					break;
 				}
 			}
@@ -139,7 +137,6 @@ function exec(context) {
 		if (!skip) result.push(pass);
 		if (stopIteration) break;
 	}
-
 	if (singleValue) return accumulate;
 	return result;
 }
@@ -166,10 +163,10 @@ function fillMap(value, start, end) {
 */
 function sliceFilter(begin, end) {
 	begin = begin || 0
-	end = end || this.array.length
-	return this.appendOperation("filter", (element, index, array, stopNow) => {
+	// end = end || this.array.length
+	return this.appendOperation("filter", (element, index, stopNow) => {
 		if (index === end) stopNow();
-		return (begin <= index && index < end)
+		return (begin <= index && (!end || index < end))
 	})
 }
 
@@ -178,15 +175,15 @@ function sliceFilter(begin, end) {
 */
 function everyReduce(predicate) {
 
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, array) => {
-		return accumulator && predicate(currentValue, currentIndex, array)
+	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex) => {
+		return accumulator && predicate(currentValue, currentIndex)
 	}, true)
 }
 function findReduce(predicate) {
 
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, array, stopNow) => {
+	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, stopNow) => {
 		if (accumulator !== undefined) return accumulator;
-		if (predicate(currentValue, currentIndex, array)) {
+		if (predicate(currentValue, currentIndex)) {
 			stopNow();
 			return currentValue
 		}
@@ -194,7 +191,7 @@ function findReduce(predicate) {
 }
 function findIndexReduce(predicate) {
 
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, array, stopNow) => {
+	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, stopNow) => {
 		if (accumulator > -1) return accumulator;
 		if (predicate(currentValue, currentIndex, array)) {
 			stopNow();
@@ -206,13 +203,13 @@ function findIndexReduce(predicate) {
 
 function joinReduce(separator) {
 	separator = separator === undefined ? "," : String(separator)
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, array) => accumulator + separator + currentValue)
+	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex) => accumulator + separator + currentValue)
 }
 
 function someReduce(predicate) {
 
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, array, stopNow) => {
-		if (predicate(currentValue, currentIndex, array)) {
+	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, stopNow) => {
+		if (predicate(currentValue, currentIndex)) {
 			stopNow();
 			return true;
 		}
