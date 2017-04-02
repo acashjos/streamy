@@ -2,8 +2,8 @@
 const chai = require("chai");
 var expect = chai.expect;
 
-let streamy = require("../").streamy
-
+let streamy = require("../dist/bundle.js");//require("../")
+console.log(streamy)
 describe(".every()", () => {
 	it("should test whether all elements in the array pass the test", ()=>{
 		let arrFail = [12, 5, 8, 130, 44]

@@ -1,0 +1,63 @@
+// setup
+
+var Benchmark = require('benchmark');
+var caseLen = 1000
+let streamy = require("../") // my module
+let arr1 = Array.from(Array(caseLen)).map((x, i) => i) //array [1,2,3,4....., caseLen]
+let arr2 = Array.from(Array(caseLen)).map((x, i) => caseLen - i) //array [1,2,3,4....., caseLen]
+var suite = new Benchmark.Suite;
+
+
+let external = [],
+    o1, o2, t1, t2, 
+	ops = streamy(arr1)
+	.map(item => item * 1.5)
+	.filter(item => (item % 2))
+	.fill(6, 4900, 4990)
+	.forEach(item => external.push(item))
+	.reduce((i, j) => i + j)
+console.log("*******************************************\n\nexecuting [ 0,1,2,3....%d ]\n", caseLen)
+
+
+suite.add('Native array operation chaining', function() {
+	// Normal array operation chaining
+    o1 = arr1
+    .map(item => item * 1.5)
+    .filter(item => (item % 2))
+    .fill(6, 4900, 4990)
+	o1.forEach(item => external.push(item))
+	o1.reduce((i, j) => i + j)
+
+}).add('Streamy', function() {
+	// Streamy array operation chaining
+    o2 = streamy(arr1)
+	.map(item => item * 1.5)
+	.filter(item => (item % 2))
+	.fill(6, 4900, 4990)
+	.forEach(item => external.push(item))
+	.reduce((i, j) => i + j)()
+}).add('Native ops re-run', function() {
+	// Normal array operation chaining
+    o1 = arr1
+    .map(item => item * 1.5)
+    .filter(item => (item % 2))
+    .fill(6, 4900, 4990)
+	o1.forEach(item => external.push(item))
+	o1.reduce((i, j) => i + j)
+
+}).add('Streamy re-run', function() {
+	// Streamy array operation chaining
+    o2 = ops()
+}).add('Native ops re-run with array 2', function() {
+	// Normal array operation chaining
+    o1 = arr2
+    .map(item => item * 1.5)
+    .filter(item => (item % 2))
+    .fill(6, 4900, 4990)
+	o1.forEach(item => external.push(item))
+	o1.reduce((i, j) => i + j)
+
+}).add('Streamy re-run with array 2', function() {
+	// Streamy array operation chaining
+    o2 = ops(arr2)
+}).run({ 'async': true })

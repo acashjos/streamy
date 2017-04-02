@@ -1,5 +1,9 @@
-// setup
-let streamy = require("../") // my module
+<!doctype html>
+<html>
+
+<body>
+	<script src="dist/bundle.js"></script>
+	<script>
 console.log("streamy is ", typeof streamy)
 var caseLen = 10000
 var repeatTest = 1
@@ -12,23 +16,23 @@ console.log("*******************************************\n\nexecuting [ 0,1,2,3.
 /**
  * Normal array operation chaining
  */
-t1 = Date.now()
+t1 = performance.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
-    .map(item => item * 1.5)
-    .filter(item => (item % 2))
-    .fill(6, 4900, 4990)
+    o1 = o1.map(item => item * 1.5)
+    o1 = o1.filter(item => (item % 2))
+    o1 = o1.fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
     o1.reduce((i, j) => i + j)
 }
-console.log("Normal ops: %d ms", Date.now() - t1)
+console.log("Normal ops: %d ms", performance.now() - t1)
 
 
 /**
  * Streamified array operation chaining
  */
-t2 = Date.now()
+t2 = performance.now()
 external = []
 for (var i = 0; i < repeatTest; ++i){
     ops = streamy(arr1)
@@ -39,7 +43,7 @@ for (var i = 0; i < repeatTest; ++i){
         .reduce((i, j) => i + j)
     o2 = ops()
 }
-console.log("Streamy: %d ms", Date.now() - t2)
+console.log("Streamy: %d ms", performance.now() - t2)
 
 
 
@@ -51,26 +55,26 @@ console.log("\n Re-run:")
 /**
  * Normal array operation chaining
  */
-t1 = Date.now()
+t1 = performance.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
     .map(item => item * 1.5)
     .filter(item => (item % 2))
     .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
-    o1.reduce( (i,j) => i+j)
+    o1.reduce((i, j) => i + j)
 }
-console.log("Normal ops: %d ms", Date.now() - t1)
+console.log("Normal ops: %d ms", performance.now() - t1)
 
 /**
  * Streamified array operation chaining
  */
-t2 = Date.now()
+t2 = performance.now()
 external = []
 for (var i = 0; i < repeatTest; ++i)
     o2 = ops()
-console.log("Streamy: %d ms", Date.now() - t2)
+console.log("Streamy: %d ms", performance.now() - t2)
 
 
 
@@ -83,23 +87,27 @@ arr1 = Array.from(Array(caseLen)).map((x, i) => i) //array [1,2,3,4....., caseLe
 /**
  * Normal array operation chaining
  */
-t1 = Date.now()
+t1 = performance.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
     .map(item => item * 1.5)
     .filter(item => (item % 2))
     .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
-    o1.reduce( (i,j) => i+j)
+    o1.reduce((i, j) => i + j)
 }
-console.log("Normal ops: %d ms", Date.now() - t1)
+console.log("Normal ops: %d ms", performance.now() - t1)
 
 /**
  * Streamified array operation chaining
  */
-t2 = Date.now()
+t2 = performance.now()
 external = []
 for (var i = 0; i < repeatTest; ++i)
     o2 = ops(arr1)
-console.log("Streamy: %d ms", Date.now() - t2)
+console.log("Streamy: %d ms", performance.now() - t2)
+	</script>
+</body>
+
+</html>

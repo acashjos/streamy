@@ -1,45 +1,40 @@
-/*
-TODO:
 
-#1 - DONE
-CLONES
-each chaining return partial application which I call clones
-
-#2
-LOOKAHEAD
-every predicate will get a lookahead(index) method as parameter just before stopNow()
-lookahead(index) will pause current loop and  start a new loop from current base index until it figure out prev_stage_result_array[index]. All values calculated during lookahead is cached for use in the main loop when resumed
-
-NB: This can impact  performance. But I hope it won't be as bad as native
-NB: This can impact memory use
-NB: THIS IS NOT A REPLACEMENT FOR THE `index` AND `array` PARAMETERS PASSED WITH PREDICATE.
-
-#3
-INTERMEDIATE STATE CACHING
-For implementing lookahead, it is required to cache every intermediate value. 
-But the real catch is that during the final exec() call, a (useCache: boolean) parameter can be passed
-This will cause the execution of every Clone to use cache from previous execution. 
-		var i = streamy(arr).map( i=> i*2); 	//does nothing
-		i.fill(9)  // does nothing
-		var j = i.fill(5)  // does nothing
-		j.fill(9)() // cache generated for `i` and `j`
-		j(useCache:true)  // will simply return cached version of arr.map( i=> i*2).fill(5) 
-		i(useCache:true)  // will simply return cached version of arr.map( i=> i*2)
-		i() // will regenerate cache for `i`
-*/
 
 function streamy(array, sequence) {
 	if (sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
 	sequence = sequence || [];
 	var context = {
-		array: array,
+		array: array || [],
 		sequence: sequence,
+		chunk: { size: 0, position: 0 },
 	}
 
 	context.appendOperation = appendOperation.bind(context);
 	const _exec = (arr) => {
-		return exec( Array.isArray(arr) ? {array: arr, sequence: context.sequence,} : context );
+		return exec( Array.isArray(arr) ? {array: arr, sequence: context.sequence, chunk: { size: 0, position: 0 },} : context );
 	}
+
+	// modifiers
+	Object.defineProperty(_exec, "apply", { value: arr => { 
+		if(context.array == arr) return _exec; 
+		context.array = arr; 
+		context.chunk.position = 0; 
+		return _exec; 
+	} })
+	Object.defineProperty(_exec, "chunk", { value: size => { 
+		context.chunk.size = size;
+		return exec(context);
+	 } })
+	Object.defineProperty(_exec, "walk", { value: () => { 
+		return _exec.chunk(1)[0];
+	 } })
+	Object.defineProperty(_exec, Symbol.iterator, { value: () => ({ 
+		next: () => {
+			if(context.chunk.position == context.array.length) return {done: true}
+			return {done: false, value:_exec.walk(1) };
+		}
+	 }) })
+
 	//primary ops
 	Object.defineProperty(_exec, "filter", { value: appendOperation.bind(context, "filter") })
 	Object.defineProperty(_exec, "forEach", { value: appendOperation.bind(context, "forEach") }) //pass through
@@ -64,8 +59,6 @@ function streamy(array, sequence) {
 
 }
 
-module.exports = streamy;
-
 function exec(context) {
 	
 	var array = context.array;
@@ -73,22 +66,25 @@ function exec(context) {
 	var sequence = context.sequence;
 	var seqLen = sequence.length;
 	var result = [];
-	var resultPointer;
 	var accumulate;
 	var singleValue = false;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
 	var frugal = true; // frugal flag will break execution when stopNow() is called
 	var stageIndex = [];
+	context.chunk.position = context.chunk.position == arrayLen ? 0 : context.chunk.position
+	var skip = context.chunk.size && context.chunk.position || 0
+	
+	var i = j = 0
 
 	function stopNow() {
 		stopIteration = frugal && true;
 	}
-	for (var i = 0; i < arrayLen; ++i) {
+	for ( i = skip; i < arrayLen; ++i) {
 		pass = array[i]
 		skip = false;
-
-		for (var j = 0; j < seqLen; ++j) {
+		if( context.chunk.size && context.chunk.size - 1 == stageIndex[seqLen - 1]) break;
+		for ( j = 0; j < seqLen; ++j) {
 			
 			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j]
 			stageIndex[j] += 1
@@ -137,6 +133,10 @@ function exec(context) {
 		if (!skip) result.push(pass);
 		if (stopIteration) break;
 	}
+
+	context.chunk.size = 0
+	context.chunk.position = i
+
 	if (singleValue) return accumulate;
 	return result;
 }
@@ -144,6 +144,9 @@ function exec(context) {
 function appendOperation(key, predicate, modifier) {
 	if (key === "reduce" && arguments.length < 3 && this.array.length == 0) {
 		throw new TypeError('Reduce of empty array with no initial value');
+	}
+	else if ( this.sequence.length && this.sequence[this.sequence.length-1][0] === "reduce"){
+		throw new TypeError('Non-iterable stages are not chainable');
 	}
 	let sequence = this.sequence.slice()
 	sequence.push([key, predicate, modifier, arguments])
@@ -203,7 +206,7 @@ function findIndexReduce(predicate) {
 
 function joinReduce(separator) {
 	separator = separator === undefined ? "," : String(separator)
-	return this.appendOperation("reduce", (accumulator, currentValue, currentIndex) => accumulator + separator + currentValue)
+	return this.appendOperation("reduce", (accumulator, currentValue) => accumulator + separator + currentValue)
 }
 
 function someReduce(predicate) {
@@ -216,3 +219,5 @@ function someReduce(predicate) {
 		return accumulator || false;
 	}, false)
 }
+
+module.exports = streamy;
