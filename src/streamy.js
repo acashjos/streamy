@@ -1,4 +1,4 @@
-
+"use strict";
 
 function streamy(array, sequence) {
 	if (sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
@@ -18,7 +18,7 @@ function streamy(array, sequence) {
 	Object.defineProperty(_exec, "apply", { value: arr => { 
 		if(context.array == arr) return _exec; 
 		context.array = arr; 
-		context.chunk.position = 0; 
+		context.chunk = { size: 0, position: 0 };
 		return _exec; 
 	} })
 	Object.defineProperty(_exec, "chunk", { value: size => { 
@@ -26,6 +26,8 @@ function streamy(array, sequence) {
 		return exec(context);
 	 } })
 	Object.defineProperty(_exec, "walk", { value: () => { 
+		if(context.sequence[context.sequence.length-1][0] === "reduce")
+			return _exec.chunk(1);
 		return _exec.chunk(1)[0];
 	 } })
 	Object.defineProperty(_exec, Symbol.iterator, { value: () => ({ 
@@ -66,26 +68,38 @@ function exec(context) {
 	var sequence = context.sequence;
 	var seqLen = sequence.length;
 	var result = [];
-	var accumulate;
 	var singleValue = false;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
 	var frugal = true; // frugal flag will break execution when stopNow() is called
-	var stageIndex = [];
-	context.chunk.position = context.chunk.position == arrayLen ? 0 : context.chunk.position
-	var skip = context.chunk.size && context.chunk.position || 0
+	var accumulate;
+	var stageIndex;
 	
-	var i = j = 0
+	var i=0, j=0;
+	if(!context.chunk.size || context.chunk.position == arrayLen) {
+
+		context.chunk.position =  0 
+		stageIndex = []
+	}
+	else {
+		accumulate = context.chunk.accumulate
+		stageIndex = context.chunk.stageIndex || [];
+		i = context.chunk.position || 0
+	}
+
 
 	function stopNow() {
 		stopIteration = frugal && true;
 	}
-	for ( i = skip; i < arrayLen; ++i) {
+	for ( i ; i < arrayLen; ++i) {
 		pass = array[i]
 		skip = false;
-		if( context.chunk.size && context.chunk.size - 1 == stageIndex[seqLen - 1]) break;
-		for ( j = 0; j < seqLen; ++j) {
 			
+		if( context.chunk.size 
+		&& typeof stageIndex[seqLen - 1] != "undefined" 
+		&& (context.chunk.position + context.chunk.size) == stageIndex[seqLen - 1]+1) break;
+		for ( j = 0; j < seqLen; ++j) {
+
 			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j]
 			stageIndex[j] += 1
 			// if(chainBreak) throw new TypeError('Non-iterable stages are not chainable');
@@ -136,6 +150,8 @@ function exec(context) {
 
 	context.chunk.size = 0
 	context.chunk.position = i
+	context.chunk.accumulate = accumulate;
+	context.chunk.stageIndex = stageIndex;
 
 	if (singleValue) return accumulate;
 	return result;

@@ -1,18 +1,44 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.streamy = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
+"use strict";
 
 function streamy(array, sequence) {
 	if (sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
 	sequence = sequence || [];
 	var context = {
-		array: array,
-		sequence: sequence
+		array: array || [],
+		sequence: sequence,
+		chunk: { size: 0, position: 0 }
 	};
 
 	context.appendOperation = appendOperation.bind(context);
 	var _exec = function _exec(arr) {
-		return exec(Array.isArray(arr) ? { array: arr, sequence: context.sequence } : context);
+		return exec(Array.isArray(arr) ? { array: arr, sequence: context.sequence, chunk: { size: 0, position: 0 } } : context);
 	};
+
+	// modifiers
+	Object.defineProperty(_exec, "apply", { value: function value(arr) {
+			if (context.array == arr) return _exec;
+			context.array = arr;
+			context.chunk = { size: 0, position: 0 };
+			return _exec;
+		} });
+	Object.defineProperty(_exec, "chunk", { value: function value(size) {
+			context.chunk.size = size;
+			return exec(context);
+		} });
+	Object.defineProperty(_exec, "walk", { value: function value() {
+			if (context.sequence[context.sequence.length - 1][0] === "reduce") return _exec.chunk(1);
+			return _exec.chunk(1)[0];
+		} });
+	Object.defineProperty(_exec, Symbol.iterator, { value: function value() {
+			return {
+				next: function next() {
+					if (context.chunk.position == context.array.length) return { done: true };
+					return { done: false, value: _exec.walk(1) };
+				}
+			};
+		} });
+
 	//primary ops
 	Object.defineProperty(_exec, "filter", { value: appendOperation.bind(context, "filter") });
 	Object.defineProperty(_exec, "forEach", { value: appendOperation.bind(context, "forEach") }); //pass through
@@ -36,8 +62,6 @@ function streamy(array, sequence) {
 	return _exec;
 }
 
-module.exports = streamy;
-
 function exec(context) {
 
 	var array = context.array;
@@ -45,21 +69,34 @@ function exec(context) {
 	var sequence = context.sequence;
 	var seqLen = sequence.length;
 	var result = [];
-	var accumulate;
 	var singleValue = false;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
 	var frugal = true; // frugal flag will break execution when stopNow() is called
-	var stageIndex = [];
+	var accumulate;
+	var stageIndex;
+
+	var i = 0,
+	    j = 0;
+	if (!context.chunk.size || context.chunk.position == arrayLen) {
+
+		context.chunk.position = 0;
+		stageIndex = [];
+	} else {
+		accumulate = context.chunk.accumulate;
+		stageIndex = context.chunk.stageIndex || [];
+		i = context.chunk.position || 0;
+	}
 
 	function stopNow() {
 		stopIteration = frugal && true;
 	}
-	for (var i = 0; i < arrayLen; ++i) {
+	for (i; i < arrayLen; ++i) {
 		pass = array[i];
 		skip = false;
 
-		for (var j = 0; j < seqLen; ++j) {
+		if (context.chunk.size && typeof stageIndex[seqLen - 1] != "undefined" && context.chunk.position + context.chunk.size == stageIndex[seqLen - 1] + 1) break;
+		for (j = 0; j < seqLen; ++j) {
 
 			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j];
 			stageIndex[j] += 1;
@@ -112,6 +149,12 @@ function exec(context) {
 		if (!skip) result.push(pass);
 		if (stopIteration) break;
 	}
+
+	context.chunk.size = 0;
+	context.chunk.position = i;
+	context.chunk.accumulate = accumulate;
+	context.chunk.stageIndex = stageIndex;
+
 	if (singleValue) return accumulate;
 	return result;
 }
@@ -119,6 +162,8 @@ function exec(context) {
 function appendOperation(key, predicate, modifier) {
 	if (key === "reduce" && arguments.length < 3 && this.array.length == 0) {
 		throw new TypeError('Reduce of empty array with no initial value');
+	} else if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
+		throw new TypeError('Non-iterable stages are not chainable');
 	}
 	var sequence = this.sequence.slice();
 	sequence.push([key, predicate, modifier, arguments]);
@@ -195,6 +240,8 @@ function someReduce(predicate) {
 		return accumulator || false;
 	}, false);
 }
+
+module.exports = streamy;
 
 },{}]},{},[1])(1)
 });

@@ -116,7 +116,9 @@ describe(".chunk(n) with an integer as parameter", () => {
 		expect(mapped.chunk(4),"returns 5th to 10th result").to.deep.equal([ 7.5, 9, 10.5, 12])
 		expect(mapped(), "A normal exec call should not be affected by chunk() calls").to.deep.equal(arr100.map( i => i*1.5))
 		expect(mapped.chunk(5),"internal cursor resets after an exec() call").to.deep.equal([0, 1.5, 3, 4.5, 6])
-		expect(mapped.apply(mapped.chunk(5)).chunk(2),"apply() call will reset internal cursor").to.deep.equal([ 11.25, 13.5])
+		let arr = mapped.chunk(5)
+		expect(mapped.apply(arr).chunk(2),"apply() call will reset internal cursor").to.deep.equal([ 11.25, 13.5])
+		expect(mapped.apply(arr).chunk(2),"apply() call with same array object will not reset internal cursor").to.deep.equal([ 15.75, 18])
 
 	})
 })
@@ -143,5 +145,24 @@ describe("Iterability", () => {
 		expect(iterated).to.deep.equal(mapped())
 		//[ 7.5, 9, 10.5, 12])
 
+	})
+})
+
+describe(".chunk(n) or .walk with a reduce operation", () => {
+	it("should return intermediate accumulator value at current cursor position", ()=>{
+		let arr = [0,1,2,3,4,5,6,7,8,9,10]
+		let reduced = streamy(arr).reduce( (acc,i) => acc+i,1)
+		// console.log(reduced())
+
+		let foreachSum = 0;
+		for(x of reduced){
+			foreachSum =x
+		}
+		expect(reduced.chunk(5),"returns 1+Sum(0...4) = 11").to.equal(11)
+		expect(reduced.chunk(4),"returns 11 + Sum(5..8").to.equal(37)
+		expect(reduced(), "A normal exec call should not be affected by chunk() calls").to.equal(arr.reduce( (acc,i) => acc+i,1))
+		expect(reduced.chunk(5),"internal cursor resets after an exec() call").to.equal(11)
+		expect(reduced.walk(),"walk will accumulate next item: 11 + 5 = 16").to.equal(16)
+		expect(foreachSum, "for-Of on reduce should return accumulated value on each iteration").to.equal(56)
 	})
 })

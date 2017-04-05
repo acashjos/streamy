@@ -3,7 +3,8 @@ const chai = require("chai");
 var expect = chai.expect;
 
 let streamy = require("../dist/bundle.js");//require("../")
-console.log(streamy)
+var arr100 = Array.from(Array(100)).map((x, i) => i)
+
 describe(".every()", () => {
 	it("should test whether all elements in the array pass the test", ()=>{
 		let arrFail = [12, 5, 8, 130, 44]
@@ -398,8 +399,67 @@ describe(".some()", () => {
 describe("Filter and Slice", () => {
 	it("should 1st map and then slice", ()=> {
 
-		var arr = Array.from(Array(100)).map((x, i) => i)
-		let op = streamy(arr).filter( i => i%2).slice(8,24)
-		expect(op()).to.deep.equal(arr.filter( i => i%2).slice(8,24))
+		let op = streamy(arr100).filter( i => i%2).slice(8,24)
+		expect(op()).to.deep.equal(arr100.filter( i => i%2).slice(8,24))
 	})
 })
+
+		//value consistency 
+describe("composite operations", ()=> {
+	it("should always pass element and index arguments identical to their native counterpart", () => {
+
+		let s ={}, n={}
+		 o1 = arr100
+			.map((item,i) => {
+				return item * 1.5
+			}).filter((item,i) => {
+				return (item % 2)
+			}).map((item,i) => {
+				n["Map"] = n["Map"] || []
+				n["Map"].push([item,i])
+				return item * 1.5
+			}).filter((item,i) => {
+				n["Filter"] = n["Filter"] || []
+				n["Filter"].push([item,i])
+				return (item % 2)
+			})
+			o1.forEach((item,i) => {
+				n["Foreach"] = n["Foreach"] || []
+				n["Foreach"].push([item,i])
+			})
+			o1.reduce((i,j,idex) => {
+				n["Reduce"] = n["Reduce"] || []
+				n["Reduce"].push([i,i,idex])
+				return (i + j)
+			})
+		
+		streamy(arr100)
+			.map((item,i) => {
+				return item * 1.5
+			}).filter((item,i) => {
+				return (item % 2)
+			}).map((item,i) => {
+				s["Map"] = s["Map"] || []
+				s["Map"].push([item,i])
+				return item * 1.5
+			}).filter((item,i) => {
+				s["Filter"] = s["Filter"] || []
+				s["Filter"].push([item,i])
+				return (item % 2)
+			}).forEach((item,i) => {
+				s["Foreach"] = s["Foreach"] || []
+				s["Foreach"].push([item,i])
+			}).reduce((i,j,idex) => {
+				s["Reduce"] = s["Reduce"] || []
+				s["Reduce"].push([i,i,idex])
+				return (i + j)
+			})()
+
+		expect(s["Map"],"map").to.deep.equal(n["Map"]);
+		expect(s["Reduce"],"reduce").to.deep.equal(n["Reduce"]);
+		expect(s["Foreach"],"foreach").to.deep.equal(n["Foreach"]);
+		expect(s["Filter"],"filter").to.deep.equal(n["Filter"]);
+
+	})
+})
+		
