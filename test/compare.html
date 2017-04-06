@@ -2,7 +2,7 @@
 <html>
 
 <body>
-    <script src="dist/bundle.js"></script>
+    <script src="../dist/bundle.js"></script>
     <script>
         console.log("streamy is ", typeof streamy)
         var caseLen = 10000
@@ -43,7 +43,7 @@
                 .reduce((i, j) => i + j)
             o2 = ops()
         }
-        console.log("Streamy: %d ms", performance.now() - t2, ops)
+        console.log("Streamy: %d ms", performance.now() - t2)
 
 
 

@@ -14,11 +14,11 @@ console.log("*******************************************\n\nexecuting [ 0,1,2,3.
  */
 t1 = Date.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
-    .map(item => item * 1.5)
-    .filter(item => (item % 2))
-    .fill(6, 4900, 4990)
+        .map(item => item * 1.5)
+        .filter(item => (item % 2))
+        .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
     o1.reduce((i, j) => i + j)
 }
@@ -30,7 +30,7 @@ console.log("Normal ops: %d ms", Date.now() - t1)
  */
 t2 = Date.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     ops = streamy(arr1)
         .map(item => item * 1.5)
         .filter(item => (item % 2))
@@ -53,13 +53,13 @@ console.log("\n Re-run:")
  */
 t1 = Date.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
-    .map(item => item * 1.5)
-    .filter(item => (item % 2))
-    .fill(6, 4900, 4990)
+        .map(item => item * 1.5)
+        .filter(item => (item % 2))
+        .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
-    o1.reduce( (i,j) => i+j)
+    o1.reduce((i, j) => i + j)
 }
 console.log("Normal ops: %d ms", Date.now() - t1)
 
@@ -85,13 +85,13 @@ arr1 = Array.from(Array(caseLen)).map((x, i) => i) //array [1,2,3,4....., caseLe
  */
 t1 = Date.now()
 external = []
-for (var i = 0; i < repeatTest; ++i){
+for (var i = 0; i < repeatTest; ++i) {
     o1 = arr1
-    .map(item => item * 1.5)
-    .filter(item => (item % 2))
-    .fill(6, 4900, 4990)
+        .map(item => item * 1.5)
+        .filter(item => (item % 2))
+        .fill(6, 4900, 4990)
     o1.forEach(item => external.push(item))
-    o1.reduce( (i,j) => i+j)
+    o1.reduce((i, j) => i + j)
 }
 console.log("Normal ops: %d ms", Date.now() - t1)
 
