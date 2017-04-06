@@ -361,8 +361,7 @@ describe(".reduce()", () => {
 		function namelogic(allNames, name) {
 			if (name in allNames) {
 				allNames[name]++;
-			}
-			else {
+			} else {
 				allNames[name] = 1;
 			}
 			return allNames;

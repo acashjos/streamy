@@ -74,7 +74,6 @@ function streamy(array, sequence) {
 	Object.defineProperty(_exec, "fill", { value: ops.fillMap.bind(context) })
 	Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) })
 
-	// keys() | values()
 	return _exec
 
 }
@@ -84,13 +83,13 @@ function streamy(array, sequence) {
 function appendOperation(key, predicate, modifier) {
 	if (key === "reduce" && arguments.length < 3 && this.array.length == 0) {
 		throw new TypeError('Reduce of empty array with no initial value');
-	}
-	else if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
+		
+	} else if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
 		throw new TypeError('Non-iterable stages are not chainable');
 	}
 	let sequence = this.sequence.slice()
 	sequence.push([key, predicate, modifier, arguments])
-	return streamy(this.array, sequence); //*/ this.exec;
+	return streamy(this.array, sequence); 
 }
 
 

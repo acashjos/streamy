@@ -10,17 +10,16 @@ module.exports = function (context) {
 	var singleValue = false;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
-	var frugal = true; // frugal flag will break execution when stopNow() is called
+	var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
 	var accumulate;
 	var stageIndex;
-
 	var i = 0, j = 0;
+
 	if (!context.chunk.size || context.chunk.position == arrayLen) {
 
 		context.chunk.position = 0
 		stageIndex = []
-	}
-	else {
+	} else {
 		accumulate = context.chunk.accumulate
 		stageIndex = context.chunk.stageIndex || [];
 		i = context.chunk.position || 0
