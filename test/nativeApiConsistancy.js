@@ -5,6 +5,10 @@ var expect = chai.expect;
 let streamy = require("../dist/bundle.js");//require("../")
 var arr100 = Array.from(Array(100)).map((x, i) => i)
 
+
+
+
+
 describe(".every()", () => {
 	it("should test whether all elements in the array pass the test", () => {
 		let arrFail = [12, 5, 8, 130, 44]
@@ -23,6 +27,10 @@ describe(".every()", () => {
 	})
 })
 
+
+
+
+
 describe(".fill()", () => {
 	it("should fill all the elements of an array from a start index to an end index with a static value", () => {
 		let testArr = [1, 2, 3]
@@ -40,6 +48,10 @@ describe(".fill()", () => {
 
 	})
 })
+
+
+
+
 
 
 describe(".filter()", () => {
@@ -113,6 +125,10 @@ describe(".filter()", () => {
 	})
 })
 
+
+
+
+
 describe(".find()", () => {
 	it("should return the value of the first element in the array that satisfies the provided testing function", () => {
 		let testArr = [12, 5, 8, 130, 44]
@@ -152,6 +168,10 @@ describe(".find()", () => {
 
 	})
 })
+
+
+
+
 
 
 describe(".findIndex()", () => {
@@ -194,6 +214,10 @@ describe(".findIndex()", () => {
 	})
 })
 
+
+
+
+
 describe(".forEach()", () => {
 	it("should  execute a provided function once for each array element.", () => {
 		var a = ['a', 'b', 'c'];
@@ -209,6 +233,10 @@ describe(".forEach()", () => {
 
 	})
 })
+
+
+
+
 
 describe(".join()", () => {
 
@@ -233,6 +261,10 @@ describe(".join()", () => {
 
 	})
 })
+
+
+
+
 
 
 describe(".map()", () => {
@@ -276,6 +308,10 @@ describe(".map()", () => {
 	})
 
 })
+
+
+
+
 
 describe(".reduce()", () => {
 	it("should apply a function against an accumulator and each element in the array (from left to right) to reduce it to a single value", () => {
@@ -335,6 +371,10 @@ describe(".reduce()", () => {
 	})
 })
 
+
+
+
+
 describe(".slice", () => {
 	it("should return a shallow copy of a portion of an array into a new array", () => {
 
@@ -363,6 +403,10 @@ describe(".slice", () => {
 		expect(listStreamy(1, 2, 3), "should equal  [1, 2, 3]").to.deep.equal(listNative(1, 2, 3))
 	})
 })
+
+
+
+
 
 describe(".some()", () => {
 	it("should test whether some element in the array passes the test", () => {
@@ -396,6 +440,10 @@ describe(".some()", () => {
 
 // composit operations
 
+
+
+
+
 describe("Filter and Slice", () => {
 	it("should 1st map and then slice", () => {
 
@@ -405,6 +453,10 @@ describe("Filter and Slice", () => {
 })
 
 //value consistency 
+
+
+
+
 describe("composite operations", () => {
 	it("should always pass element and index arguments identical to their native counterpart", () => {
 

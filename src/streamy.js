@@ -28,23 +28,32 @@ function streamy(array, sequence) {
 	})
 	Object.defineProperty(_exec, "chunk", {
 		value: size => {
+			if (context.chunk.position == context.array.length) {
+				context.chunk = { size: 0, position: 0 };
+				return { done: true }
+			}
+			if (size < 0)
+				throw new TypeError("Reverse iteration not supported")
 			context.chunk.size = size;
-			return exec(context);
+			return { done: false, value: exec(context) };
 		}
 	})
 	Object.defineProperty(_exec, "walk", {
 		value: () => {
+			if (context.chunk.position == context.array.length) {
+				context.chunk = { size: 0, position: 0 };
+				return { done: true }
+			}
+			context.chunk.size = 1;
 			if (context.sequence[context.sequence.length - 1][0] === "reduce")
-				return _exec.chunk(1);
-			return _exec.chunk(1)[0];
+				return { done: false, value: exec(context) };
+			return { done: false, value: exec(context)[0] }
 		}
 	})
+
 	Object.defineProperty(_exec, Symbol.iterator, {
 		value: () => ({
-			next: () => {
-				if (context.chunk.position == context.array.length) return { done: true }
-				return { done: false, value: _exec.walk(1) };
-			}
+			next: _exec.walk
 		})
 	})
 

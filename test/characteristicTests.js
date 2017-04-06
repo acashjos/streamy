@@ -6,6 +6,10 @@ let streamy = require("../")
 
 const arr100 = Array.from(Array(100)).map((x, i) => i)
 
+
+
+
+
 describe("streamy(array)()", () => {
 	it("Should return a shallow copy", () => {
 		let arrayCopy = streamy(arr100)();
@@ -14,25 +18,13 @@ describe("streamy(array)()", () => {
 	})
 })
 
+
+
+
+
 describe("Chaining", () => {
 	it("should produce partial applications", () => {
 
-		/*
-		# OLD STATE 
-			issue with current design:
-				var i = streamy(arr);
-				i.fill(9)
-				i.fill(5)  // same as streamy(arr).fill(9).fill(5)
-				i.fill(9)()
-				i.fill(5)	// breaks loop linearity
-			This is unintuitive. 
-		# NEW STATE
-			Each chaining return a partial application. By returning partial application the behaviour changes to 
-				i.fill(9)  // => streamy(arr).fill(9)
-				var j = i.fill(5)  // => streamy(arr).fill(5)
-				j.fill(9)() // => streamy(arr).fill(5).fill(9)()
-				i.fill(4)  // => streamy(arr).fill(4) loop linearity is not broken.
-		*/
 		let testArr = [12, 5, 8, 130, 44]
 
 		let mapped = streamy(testArr).map(i => i * 1.5)	// [ 18, 7.5, 12, 195, 66 ]
@@ -54,6 +46,10 @@ describe("Chaining", () => {
 })
 
 
+
+
+
+
 describe("repeated exec() calls", () => {
 	it("should produce the same result", () => {
 
@@ -64,6 +60,10 @@ describe("repeated exec() calls", () => {
 	})
 })
 
+
+
+
+
 describe("chaining after reduce()", () => {
 	it("should throw error", () => {
 
@@ -72,6 +72,10 @@ describe("chaining after reduce()", () => {
 		expect(ops.map.bind(null, i => i * 1.5), "should throw error").to.throw(TypeError);
 	})
 })
+
+
+
+
 
 describe("exec() with an array as parameter", () => {
 	it("should apply the changes to the provided array instead of initialized array", () => {
@@ -88,6 +92,10 @@ describe("exec() with an array as parameter", () => {
 
 	})
 })
+
+
+
+
 
 describe(".apply(array) with an array as parameter", () => {
 	it("should permanently replace the initialized array.", () => {
@@ -107,37 +115,66 @@ describe(".apply(array) with an array as parameter", () => {
 	})
 })
 
+
+
 // chunk processing
+
+
 describe(".chunk(n) with an integer as parameter", () => {
 	it("should return the next n results from the current cursor and pause.", () => {
 
 		let mapped = streamy(arr100).map(i => i * 1.5)
-		expect(mapped.chunk(5), "returns 1st 5 outputs").to.deep.equal([0, 1.5, 3, 4.5, 6])
-		expect(mapped.chunk(4), "returns 5th to 10th result").to.deep.equal([7.5, 9, 10.5, 12])
+		expect(mapped.chunk(5), "returns 1st 5 outputs").to.deep.equal({ done: false, value: [0, 1.5, 3, 4.5, 6] })
+		expect(mapped.chunk(4).value, "returns 5th to 10th result").to.deep.equal([7.5, 9, 10.5, 12])
 		expect(mapped(), "A normal exec call should not be affected by chunk() calls").to.deep.equal(arr100.map(i => i * 1.5))
-		expect(mapped.chunk(5), "internal cursor resets after an exec() call").to.deep.equal([0, 1.5, 3, 4.5, 6])
-		let arr = mapped.chunk(5)
-		expect(mapped.apply(arr).chunk(2), "apply() call will reset internal cursor").to.deep.equal([11.25, 13.5])
-		expect(mapped.apply(arr).chunk(2), "apply() call with same array object will not reset internal cursor").to.deep.equal([15.75, 18])
+		expect(mapped.chunk(5).value, "internal cursor resets after an exec() call").to.deep.equal([0, 1.5, 3, 4.5, 6])
+		let arr = mapped.chunk(5).value
+		expect(mapped.apply(arr).chunk(2).value, "apply() call will reset internal cursor").to.deep.equal([11.25, 13.5])
+		expect(mapped.apply(arr).chunk(2).value, "apply() call with same array object will not reset internal cursor").to.deep.equal([15.75, 18])
+		expect(mapped.chunk(2).value, "chunk call with size > arr.length will return remaining").to.deep.equal([20.25])
+		expect(mapped.chunk(2), "returns done").to.deep.equal({ done: true })
 
 	})
+
+	it("should return intermediate accumulator value at current cursor position when used with reduce", () => {
+		let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+		let reduced = streamy(arr).reduce((acc, i) => acc + i, 1)
+		expect(reduced.chunk(5).value, "returns 1+Sum(0...4) = 11").to.equal(11)
+		expect(reduced.chunk(4).value, "returns 11 + Sum(5..8").to.equal(37)
+		expect(reduced(), "A normal exec call should not be affected by chunk() calls").to.equal(arr.reduce((acc, i) => acc + i, 1))
+	})
 })
+
+
+
 
 describe(".walk()", () => {
 	it("should return the next single result item from the current cursor and pause.", () => {
 
 		let mapped = streamy(arr100).map(i => i * 1.5) // [0, 1.5, 3, 4.5, 6]
-		expect(mapped.walk(), "returns 1st output").to.equal(0)
-		expect(mapped.walk(), "returns 2nd output").to.equal(1.5)
-		expect(mapped.chunk(3), "returns 3rd to 5th result").to.deep.equal([3, 4.5, 6])
-		expect(mapped.walk(), "returns 1st output").to.equal(7.5)
+		expect(mapped.walk().value, "returns 1st output").to.equal(0)
+		expect(mapped.walk().value, "returns 2nd output").to.equal(1.5)
+		expect(mapped.chunk(3).value, "returns 3rd to 5th result").to.deep.equal([3, 4.5, 6])
+		expect(mapped.chunk(94), "returns 5th to 94th result").to.be.an("object")
+		expect(mapped.walk().value, "returns 1st output").to.equal(148.5)
+		expect(mapped.walk(), "returns done").to.deep.equal({ done: true })
 		//[ 7.5, 9, 10.5, 12])
 
 	})
+
+	it("should return intermediate accumulator value at current cursor position when used with reduce", () => {
+		let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+		let reduced = streamy(arr).reduce((acc, i) => acc + i, 1)
+		expect(reduced.chunk(5).value, "returns 1+Sum(0...4) = 11").to.equal(11)
+		expect(reduced.walk().value, "walk will accumulate next item: 11 + 5 = 16").to.equal(16)
+	})
 })
 
+
+
+
 describe("Iterability", () => {
-	it("should iterable so that it can be used in for..of ", () => {
+	it("should be iterable so that it can be used in for..of ", () => {
 
 		let mapped = streamy(arr100).map(i => i * 1.5) // [0, 1.5, 3, 4.5, 6]
 		let iterated = []
@@ -146,10 +183,8 @@ describe("Iterability", () => {
 		//[ 7.5, 9, 10.5, 12])
 
 	})
-})
 
-describe(".chunk(n) or .walk with a reduce operation", () => {
-	it("should return intermediate accumulator value at current cursor position", () => {
+	it("should return intermediate accumulator value at current cursor position when used with reduce", () => {
 		let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 		let reduced = streamy(arr).reduce((acc, i) => acc + i, 1)
 		// console.log(reduced())
@@ -158,11 +193,73 @@ describe(".chunk(n) or .walk with a reduce operation", () => {
 		for (x of reduced) {
 			foreachSum = x
 		}
-		expect(reduced.chunk(5), "returns 1+Sum(0...4) = 11").to.equal(11)
-		expect(reduced.chunk(4), "returns 11 + Sum(5..8").to.equal(37)
-		expect(reduced(), "A normal exec call should not be affected by chunk() calls").to.equal(arr.reduce((acc, i) => acc + i, 1))
-		expect(reduced.chunk(5), "internal cursor resets after an exec() call").to.equal(11)
-		expect(reduced.walk(), "walk will accumulate next item: 11 + 5 = 16").to.equal(16)
 		expect(foreachSum, "for-Of on reduce should return accumulated value on each iteration").to.equal(56)
+	})
+})
+
+
+
+// special cases
+
+// stopNow is an optimization trick but not always useful.
+// It is implemented primarily for optimizing pseudo operations slice,find,findIndex,some.
+// stopNow is disabled whenever there is a forEach in the chain.
+describe("stopNow(): 3rd parameter on any predicate ", () => {
+	it("should be a function, which when invoked will stop the loop", () => {
+
+		let lastIndex
+		streamy(arr100).map((elem, i, stopNow) => {
+			if (i == 90) stopNow()
+			lastIndex = i;
+		})()
+		expect(lastIndex, "should break loop at 90").to.equal(90)
+
+
+		streamy(arr100).filter((elem, i, stopNow) => {
+			if (i == 79) stopNow()	// 39 in map
+			return !(i % 2)
+		}).map((elem, i, stopNow) => {
+			if (i == 38) stopNow()
+			lastIndex = i;
+		})()
+		expect(lastIndex, "should break loop at first stopNow() invokation at 38 of (38 and 39)").to.equal(38)
+	})
+
+	//for consistancy, third param in foreach predicate is also stopnow. This donot have any effect on the loop though
+	it("should not have any effect when there is a foreach in the chain", () => {
+
+
+		streamy(arr100).filter((elem, i, stopNow) => {
+			if (i == 79) stopNow()	// 39 in map
+			return !(i % 2)
+		}).forEach((e, i, stopNow) => {
+			if (i == 10) expect(stopNow, "for consistancy, third param in foreach predicate is stopnow. This donot have any effect").to.be.a("function")
+		}) //do nothing
+			.map((elem, i, stopNow) => {
+				if (i == 38) stopNow()
+				lastIndex = i;
+			})()
+		expect(lastIndex, "loop till end.so 49 not (38 and 39)").to.equal(49)
+	})
+})
+
+// async operation - special case
+
+describe(".walk() as an async operation", () => {
+	it("should walk through an array asynchronously.", (done) => {
+
+		let sttime = Date.now()
+		let entime = Date.now()
+		let simpleArr = [0, 1, 2, 3, 4, 5]
+		let mapped = streamy(simpleArr).map(i => i * 1.5).forEach((i) => {
+			entime = Date.now()
+			setTimeout(mapped.walk, 100)
+		})
+		mapped.walk()
+		setTimeout(() => {
+			expect(entime - sttime).to.be.above(500)
+			done()
+		}, 1000)
+
 	})
 })

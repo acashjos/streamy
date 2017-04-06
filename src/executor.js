@@ -87,10 +87,14 @@ module.exports = function (context) {
 		if (stopIteration) break;
 	}
 
+	if (context.chunk.size) {
+		context.chunk.position = i
+		context.chunk.accumulate = accumulate;
+		context.chunk.stageIndex = stageIndex;
+	} else {
+		context.chunk = { size: 0, position: 0 }
+	}
 	context.chunk.size = 0
-	context.chunk.position = i
-	context.chunk.accumulate = accumulate;
-	context.chunk.stageIndex = stageIndex;
 
 	if (singleValue) return accumulate;
 	return result;
