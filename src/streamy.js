@@ -5,16 +5,12 @@ var ops = require("./pseudoOperations")
 
 function streamy(array, sequence) {
 	if (sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
-	sequence = sequence || [];
-	var context = {
-		array: array || [],
-		sequence: sequence,
-		chunk: { size: 0, position: 0 },
-	}
+	// sequence = sequence || [];
+	var context = new Context(array, sequence)
 
 	context.appendOperation = appendOperation.bind(context);
 	const _exec = (arr) => {
-		return exec(Array.isArray(arr) ? { array: arr, sequence: context.sequence, chunk: { size: 0, position: 0 }, } : context);
+		return exec(Array.isArray(arr) ? new Context(arr, context.sequence) : context);
 	}
 
 	// modifiers
@@ -81,15 +77,32 @@ function streamy(array, sequence) {
 
 
 function appendOperation(key, predicate, modifier) {
-	if (key === "reduce" && arguments.length < 3 && this.array.length == 0) {
-		throw new TypeError('Reduce of empty array with no initial value');
-		
-	} else if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
+	if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
 		throw new TypeError('Non-iterable stages are not chainable');
 	}
 	let sequence = this.sequence.slice()
 	sequence.push([key, predicate, modifier, arguments])
 	return streamy(this.array, sequence); 
+}
+
+function Context(array, sequence){
+	this.array = array || [];
+	this.sequence = sequence || [];
+	this.chunk = { size: 0, position: 0 };
+	this.hasReduce = false;
+	this.hasForEach = false;
+	
+	this.sequence.forEach( operationParams => {
+		switch (operationParams[0]) {
+			case "reduce":
+				this.hasReduce = true;
+				this.hasReduceInit = operationParams[3].length >= 3 
+				break;
+			case "forEach":
+				this.hasForEach = true;
+				break;
+		}
+	})
 }
 
 

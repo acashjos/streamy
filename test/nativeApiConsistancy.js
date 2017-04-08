@@ -8,7 +8,7 @@ var arr100 = Array.from(Array(100)).map((x, i) => i)
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every
 describe(".every()", () => {
 	it("should test whether all elements in the array pass the test", () => {
 		let arrFail = [12, 5, 8, 130, 44]
@@ -30,7 +30,7 @@ describe(".every()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
 describe(".fill()", () => {
 	it("should fill all the elements of an array from a start index to an end index with a static value", () => {
 		let testArr = [1, 2, 3]
@@ -53,7 +53,7 @@ describe(".fill()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter
 describe(".filter()", () => {
 	it("should create a new array with all elements that pass the test", () => {
 		let testArr = [12, 5, 8, 130, 44]
@@ -128,7 +128,7 @@ describe(".filter()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
 describe(".find()", () => {
 	it("should return the value of the first element in the array that satisfies the provided testing function", () => {
 		let testArr = [12, 5, 8, 130, 44]
@@ -173,7 +173,7 @@ describe(".find()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
 describe(".findIndex()", () => {
 	it("should return the index of the first element in the array that satisfies the provided testing function", () => {
 		let testArr = [12, 5, 8, 130, 44]
@@ -217,7 +217,7 @@ describe(".findIndex()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
 describe(".forEach()", () => {
 	it("should  execute a provided function once for each array element.", () => {
 		var a = ['a', 'b', 'c'];
@@ -237,7 +237,7 @@ describe(".forEach()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join
 describe(".join()", () => {
 
 	it("should join all elements of an array into a string", () => {
@@ -266,7 +266,7 @@ describe(".join()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
 describe(".map()", () => {
 	it("should create a new array with the results of calling provided function on every element", () => {
 		var numbers = [1, 4, 9];
@@ -312,7 +312,7 @@ describe(".map()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce
 describe(".reduce()", () => {
 	it("should apply a function against an accumulator and each element in the array (from left to right) to reduce it to a single value", () => {
 		var nativeSum = [0, 1, 2, 3].reduce(function (acc, val) {
@@ -373,7 +373,7 @@ describe(".reduce()", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
 describe(".slice", () => {
 	it("should return a shallow copy of a portion of an array into a new array", () => {
 
@@ -406,7 +406,7 @@ describe(".slice", () => {
 
 
 
-
+// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/some
 describe(".some()", () => {
 	it("should test whether some element in the array passes the test", () => {
 		let arrFail = [2, 5, 8, 1, 4]

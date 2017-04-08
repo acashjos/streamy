@@ -2,19 +2,26 @@
 
 module.exports = function (context) {
 
+	
+
 	var array = context.array;
 	var arrayLen = array.length;
 	var sequence = context.sequence;
 	var seqLen = sequence.length;
 	var result = [];
-	var singleValue = false;
+	var singleValue = !!context.hasReduce;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
-	var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
+	// var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
 	var accumulate;
 	var stageIndex;
 	var i = 0, j = 0;
 
+// pre-requisite checks before executing
+	if( context.hasReduce && !context.hasReduceInit && !arrayLen) {
+		throw new TypeError('Reduce of empty array with no initial value');
+		
+	}
 	if (!context.chunk.size || context.chunk.position == arrayLen) {
 
 		context.chunk.position = 0
@@ -25,10 +32,8 @@ module.exports = function (context) {
 		i = context.chunk.position || 0
 	}
 
-
-	function stopNow() {
-		stopIteration = frugal && true;
-	}
+	var stopNow = context.hasForEach ? () => {} : () =>{ stopIteration = true;}; 
+	
 	for (i; i < arrayLen; ++i) {
 		pass = array[i]
 		skip = false;
@@ -57,7 +62,7 @@ module.exports = function (context) {
 					break;
 				}
 				case "forEach": {
-					frugal = false;	// frugal causes to stop iteration on stopNow(). this will affect foreach
+					// frugal = false;	// frugal causes to stop iteration on stopNow(). this will affect foreach
 					predicate.call(modifier, pass, stageIndex[j], stopNow)
 					break;
 				}
@@ -68,7 +73,7 @@ module.exports = function (context) {
 
 				case "reduce": {
 					skip = true;
-					singleValue = true;
+					// singleValue = true;
 					if (stageIndex[j] === 0) {
 						if (args.length < 3) {
 							accumulate = pass;
