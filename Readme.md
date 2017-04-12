@@ -77,6 +77,7 @@ Streamy is a different approach, not necessarily a better approach for every use
 - Partial execution
 - Arguably a better execution time in chrome and NodeJs.
 > Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing `Streamy` for speed "improvements". However `streamy` tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+
 You should consider streamy if you handle huge arrays and:
 - have to implement a complex custom `forEach` to modify your array,
 - just need a part of the result at a time.
