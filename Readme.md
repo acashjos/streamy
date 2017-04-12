@@ -32,24 +32,17 @@ Streamy is a set of array operations implemented in a vertical first fashion
 var streamy = require('streamy');
 var numbers = [1, 4, 9];
 var roots = streamy(numbers).map(Math.sqrt); // is a function
-```
-### Normal usage
-```js
+
+//  Normal usage
 var rootValue = roots(); // is [1, 2, 3]
+
+// With for-of
+for(var x of roots){ /* use x */ }
+
+// Chained operation
+var rootsSum = roots.reduce( (i, j) => i + j)();  //  is 6
+
 // numbers is still [1, 4, 9]
-```
-### With for-of
-```js
-var newArray = []
-for(var x of roots){
-  newArray.push(x)
-}
-// newArray is now [1, 2, 3]
-```
-### Chained operation
-```js
-var rootsSum = roots.reduce( (i, j) => i + j)();
-// rootsSum is 6
 ```
 
 ### Generic usage
@@ -60,25 +53,20 @@ ops([1,9,25]) // [1+3+5] = 9
 ```
 
 ## What is streamy?
-Conventionally an operation like `array.filter(...).map(...).slice(..)` would perform 3 iterations, one at each operation. 
-```
-array   [ n1, n2, n3, n4, n5]
-op1       ->  ->  ->  ->  ->
-       <------<--------<----
-op2       ->  ->  ->  ->  ->
-       <------<--------<----
-op3       ->  ->  ->  ->  ->
-```
-Another approach is to implement a `array.forEach(...)` with custom logic. While this is excellent for performance, it takes a hit on readability and maintainability. 
+Conventionally an operation like `array.filter(...).map(...).slice(..)` would perform 3 iterations, create an `array` after each iteration.
 
-*streamy* is trying to hit a sweet spot between these two approaches. With streamy, chaining prepares the execution logic and returns a function allowing a lazy evaluation. streamy linearizes the logic such that it executes the entire operation stack in a single go, iterating over the array just once. 
+*streamy* is an attempt to solve it in a different way. With streamy, chaining prepares the execution logic and returns a function allowing a lazy evaluation. streamy linearizes the logic such that it executes the entire operation stack in a single go, creating an array just once. 
 ```
-array   [ n1, n2, n3, n4, n5]
-           ->  ->  ->  -> 
-op1       |   |   |   |   |
-op2       |   |   |   |   |
-op3       |   |   |   |   |
-          v   v   v   v   v
+  ## Native ##                            ## Streamy ##
+
+array   [ n1, n2, n3, n4, n5]           array   [ n1, n2, n3, n4, n5]
+op1       ->  ->  ->  ->  ->                       ->  ->  ->  -> 
+       <------<--------<----            op1       |   |   |   |   |
+op2       ->  ->  ->  ->  ->                      v   v   v   v   v
+       <------<--------<----            op2       |   |   |   |   |
+op3       ->  ->  ->  ->  ->                      v   v   v   v   v
+                                        op3       |   |   |   |   |
+                                                  v   v   v   v   v
 ```
 ## Why Streamy
 Streamy is a different approach, not necessarily a better approach for every use case. Some of the objectives achieved by *streamy* which I find desirable are:
@@ -88,6 +76,12 @@ Streamy is a different approach, not necessarily a better approach for every use
 - Operation reusability
 - Partial execution
 - Arguably a better execution time in chrome and NodeJs.
+> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing `Streamy` for speed "improvements". However `streamy` tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+You should consider streamy if you handle huge arrays and:
+- have to implement a complex custom `forEach` to modify your array,
+- just need a part of the result at a time.
+- have to iterate over the result.
+- need the operations to be portable and extendable.
 
 ## Available operations
 ### Base operations
@@ -108,8 +102,9 @@ Streamy is a different approach, not necessarily a better approach for every use
 ### Behaviour modifier functions
 - apply
 - chunk
+- isMoving
+- resetPointer
 - walk
-- *at
 
 > In addition streamy also implements `Symbol.iterator` function to enable *Iterability*
 ## Gotchas
