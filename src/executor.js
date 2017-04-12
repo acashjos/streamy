@@ -1,50 +1,54 @@
 "use strict";
 
+
 module.exports = function (context) {
 
-	
 
 	var array = context.array;
 	var arrayLen = array.length;
 	var sequence = context.sequence;
-	var seqLen = sequence.length;
+	var seqLen = sequence.length - 1;
 	var result = [];
 	var singleValue = !!context.hasReduce;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
-	// var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
 	var accumulate;
 	var stageIndex;
-	var i = 0, j = 0;
+	var stepSize = 1
+	var i = 0, j = 0, limit = arrayLen;
 
 // pre-requisite checks before executing
 	if( context.hasReduce && !context.hasReduceInit && !arrayLen) {
-		throw new TypeError('Reduce of empty array with no initial value');
+		throw new TypeError('reduce of empty array with no initial value');
 		
 	}
-	if (!context.chunk.size || context.chunk.position == arrayLen) {
-
-		context.chunk.position = 0
-		stageIndex = []
-	} else {
+	if (context.chunk.size) {
 		accumulate = context.chunk.accumulate
 		stageIndex = context.chunk.stageIndex || [];
 		i = context.chunk.position || 0
+		limit = context.chunk.size + (context.chunk.skip || 0)
+	} else {
+		stageIndex = []
+	}
+	if(context.reverse){
+		stepSize = -1
+		 i = i >= arrayLen ? arrayLen - 1 : i
+	} else {
+		 i = i < 0 ? 0 : i		
 	}
 
 	var stopNow = context.hasForEach ? () => {} : () =>{ stopIteration = true;}; 
 	
-	for (i; i < arrayLen; ++i) {
+	for (i; i < arrayLen && limit && i >= 0; i = i + stepSize) {
 		pass = array[i]
 		skip = false;
-
-		if (context.chunk.size
-			&& typeof stageIndex[seqLen - 1] != "undefined"
-			&& (context.chunk.position + context.chunk.size) == stageIndex[seqLen - 1] + 1) break;
-		for (j = 0; j < seqLen; ++j) {
+		// if (context.chunk.size
+		// 	&& typeof stageIndex[seqLen] != "undefined"
+		// 	&& limit == stageIndex[seqLen] + 1) break;
+		for (j = 0; j <= seqLen; ++j) {
 
 			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j]
-			stageIndex[j] += 1
+			stageIndex[j] += stepSize
 			// if(chainBreak) throw new TypeError('Non-iterable stages are not chainable');
 			key = sequence[j][0]
 			predicate = sequence[j][1]
@@ -56,7 +60,7 @@ module.exports = function (context) {
 				case "filter": {
 					if (!predicate.call(modifier, pass, stageIndex[j], stopNow)) {
 						skip = true;
-						// stageIndex[j]--;
+						limit++;
 						j = seqLen; // break after this iteration
 					}
 					break;
@@ -87,7 +91,9 @@ module.exports = function (context) {
 				}
 			}
 		}
-		if (!skip) result.push(pass);
+		limit--;
+		if(context.chunk.size && limit >= context.chunk.size) continue;
+		if (!skip && !singleValue) result.push(pass);
 		if (stopIteration) break;
 	}
 
@@ -99,6 +105,7 @@ module.exports = function (context) {
 		context.chunk = { size: 0, position: 0 }
 	}
 	context.chunk.size = 0
+	context.reverse = false;
 
 	if (singleValue) return accumulate;
 	return result;

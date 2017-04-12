@@ -76,7 +76,8 @@ Streamy is a different approach, not necessarily a better approach for every use
 - Operation reusability
 - Partial execution
 - Arguably a better execution time in chrome and NodeJs.
-> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing `Streamy` for speed "improvements". However `streamy` tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing `Streamy` for speed "benefits". However `streamy` tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+
 You should consider streamy if you handle huge arrays and:
 - have to implement a complex custom `forEach` to modify your array,
 - just need a part of the result at a time.
@@ -110,7 +111,7 @@ You should consider streamy if you handle huge arrays and:
 ## Gotchas
 1) Every chain should terminate with an empty `()`. Execution will only commence after that.
 2) With streamy, `foreach` **do not** terminate chaining. You can chain multiple `foreach` blocks or even add a `reduce` block after a `foreach`.
-3) Unlike native function, which usually have a function signature similar to `(..., element, index, array..)`, streamy functions will not provide an `array`. It will however provide ` element, index` parameters. The `index` provided is calculated to match the index of a virtual array that the previous operations could have generated. In other words, `element` and `index` are exactly the same as what you'd get when using native array operations
+3) Unlike native function, which usually have a function signature similar to `(..., element, index, array..)`, streamy operations will not provide an `array`. It will however provide ` element, index` parameters. The `index` provided is calculated to match the index of a virtual array that the previous operations could have generated. In other words, `element` and `index` are exactly the same as what you'd get when using native array operations
 
 ## Documentation
 

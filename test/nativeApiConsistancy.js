@@ -2,7 +2,7 @@
 const chai = require("chai");
 var expect = chai.expect;
 
-let streamy = require("../dist/bundle.js");//require("../")
+let streamy = require("../")
 var arr100 = Array.from(Array(100)).map((x, i) => i)
 
 
@@ -180,10 +180,11 @@ describe(".findIndex()", () => {
 		function isBigEnough(element, index, array) {
 			return element >= 15;
 		}
-		expect(streamy(testArr).find(isBigEnough)(), "should equal 4").to.equal(testArr.find(isBigEnough));
+		expect(streamy(testArr).findIndex(isBigEnough)(), "should equal 4").to.equal(testArr.findIndex(isBigEnough));
+		expect(streamy([0,1,2,3]).findIndex(isBigEnough)(), "should equal -1").to.equal(-1);
 
 		// using arrow functions
-		expect(streamy(testArr).find(x => x >= 10)(), "should equal 0").to.equal(testArr.find(x => x >= 10));
+		expect(streamy(testArr).findIndex(x => x >= 10)(), "should equal 0").to.equal(testArr.findIndex(x => x >= 10));
 
 		// test 2
 		var inventory = [
@@ -196,7 +197,7 @@ describe(".findIndex()", () => {
 			return fruit.name === 'cherries';
 		}
 
-		expect(streamy(inventory).find(findCherries)(), "should return 2").to.deep.equal(inventory.find(findCherries));
+		expect(streamy(inventory).findIndex(findCherries)(), "should return 2").to.deep.equal(inventory.findIndex(findCherries));
 
 		// test 3
 		function isPrime(element, index, array) {
@@ -208,8 +209,8 @@ describe(".findIndex()", () => {
 			}
 			return element > 1;
 		}
-		expect(streamy([4, 6, 8, 12]).find(isPrime)(), "should return -1").to.deep.equal([4, 6, 8, 12].find(isPrime));
-		expect(streamy([4, 5, 8, 12]).find(isPrime)(), "should return 1").to.deep.equal([4, 5, 8, 12].find(isPrime));
+		expect(streamy([4, 6, 8, 12]).findIndex(isPrime)(), "should return -1").to.deep.equal([4, 6, 8, 12].findIndex(isPrime));
+		expect(streamy([4, 5, 8, 12]).findIndex(isPrime)(), "should return 1").to.deep.equal([4, 5, 8, 12].findIndex(isPrime));
 
 	})
 })
@@ -351,7 +352,7 @@ describe(".reduce()", () => {
 		// reduce() without initialValue
 		expect(streamy([{ x: 22 }, { x: 42 }]).reduce(maxCallback)(), "should equal 42").to.equal(42);
 		expect(streamy([{ x: 22 }]).reduce(maxCallback)(), "should equal { x: 22 }").to.deep.equal({ x: 22 });
-		expect(streamy([]).reduce.bind(null, maxCallback), "should throw error").to.throw(TypeError);
+		expect(streamy().reduce( maxCallback), "should throw error").to.throw(TypeError);
 
 		// map/reduce; better solution, also works for empty arrays
 		expect(streamy([{ x: 22 }, { x: 42 }]).map(el => el.x).reduce(maxCallback2, -Infinity)(), "should equal 42").to.equal(42);
@@ -373,35 +374,35 @@ describe(".reduce()", () => {
 
 
 
-// contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
-describe(".slice", () => {
-	it("should return a shallow copy of a portion of an array into a new array", () => {
+// // contains content from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
+// describe(".slice", () => {
+// 	it("should return a shallow copy of a portion of an array into a new array", () => {
 
-		var fruits = ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'];
-		expect(streamy(fruits).slice(1, 3)(), "should equal ['Orange','Lemon']").to.deep.equal(fruits.slice(1, 3))
-		expect(fruits, "should not change").to.deep.equal(['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'])
+// 		var fruits = ['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'];
+// 		expect(streamy(fruits).slice(1, 3)(), "should equal ['Orange','Lemon']").to.deep.equal(fruits.slice(1, 3))
+// 		expect(fruits, "should not change").to.deep.equal(['Banana', 'Orange', 'Lemon', 'Apple', 'Mango'])
 
-		//test 2
+// 		//test 2
 
-		var myHonda = { color: 'red', wheels: 4, engine: { cylinders: 4, size: 2.2 } };
-		var myCar = [myHonda, 2, 'cherry condition', 'purchased 1997'];
-		var streamySlice = streamy(myCar).slice(0, 2)()
-		var nativeSlice = myCar.slice(0, 2)
-		expect(streamySlice, "should equal ['Orange','Lemon']").to.deep.equal(nativeSlice)
-		expect(streamySlice[0], "should be shallow copy. streamySlice[0] should point to myHonda").to.equal(myHonda)
-		expect(streamySlice[0], "streamySlice[0] and nativeSlice[0] should point to myHonda").to.equal(nativeSlice[0])
+// 		var myHonda = { color: 'red', wheels: 4, engine: { cylinders: 4, size: 2.2 } };
+// 		var myCar = [myHonda, 2, 'cherry condition', 'purchased 1997'];
+// 		var streamySlice = streamy(myCar).slice(0, 2)()
+// 		var nativeSlice = myCar.slice(0, 2)
+// 		expect(streamySlice, "should equal ['Orange','Lemon']").to.deep.equal(nativeSlice)
+// 		expect(streamySlice[0], "should be shallow copy. streamySlice[0] should point to myHonda").to.equal(myHonda)
+// 		expect(streamySlice[0], "streamySlice[0] and nativeSlice[0] should point to myHonda").to.equal(nativeSlice[0])
 
-		// test 3 array-like
-		function listNative() {
-			return Array.prototype.slice.call(arguments);
-		}
-		function listStreamy() {
-			return streamy(arguments).slice()();
-		}
+// 		// test 3 array-like
+// 		function listNative() {
+// 			return Array.prototype.slice.call(arguments);
+// 		}
+// 		function listStreamy() {
+// 			return streamy(arguments).slice()();
+// 		}
 
-		expect(listStreamy(1, 2, 3), "should equal  [1, 2, 3]").to.deep.equal(listNative(1, 2, 3))
-	})
-})
+// 		expect(listStreamy(1, 2, 3), "should equal  [1, 2, 3]").to.deep.equal(listNative(1, 2, 3))
+// 	})
+// })
 
 
 
@@ -437,19 +438,16 @@ describe(".some()", () => {
 	})
 })
 
-// composit operations
+// // composit operations
 
+// describe("Filter and Slice", () => {
+// 	it("should 1st map and then slice", () => {
 
+// 		let op = streamy(arr100).filter(i => i % 2).slice(8, 24)
+// 		expect(op()).to.deep.equal(arr100.filter(i => i % 2).slice(8, 24))
+// 	})
+// })
 
-
-
-describe("Filter and Slice", () => {
-	it("should 1st map and then slice", () => {
-
-		let op = streamy(arr100).filter(i => i % 2).slice(8, 24)
-		expect(op()).to.deep.equal(arr100.filter(i => i % 2).slice(8, 24))
-	})
-})
 
 //value consistency 
 

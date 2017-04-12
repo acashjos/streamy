@@ -16,40 +16,57 @@ function streamy(array, sequence) {
 	// modifiers
 	Object.defineProperty(_exec, "apply", {
 		value: arr => {
+			if (!Array.isArray(arr)) {
+				throw new TypeError(".apply() expected an array. got " + (typeof arr))
+			}
 			if (context.array == arr) return _exec;
 			context.array = arr;
-			context.chunk = { size: 0, position: 0 };
+			context.chunk = { size: 0, position: -1 };
 			return _exec;
 		}
 	})
 	Object.defineProperty(_exec, "chunk", {
-		value: size => {
-			if (context.chunk.position == context.array.length) {
-				context.chunk = { size: 0, position: 0 };
-				return { done: true }
+		value: (size, skip) => {
+
+			if (size < 0) {
+				if (context.hasReduce) throw new TypeError("Reverse iteration not supported with reduce")
+				context.reverse = true;
 			}
-			if (size < 0)
-				throw new TypeError("Reverse iteration not supported")
-			context.chunk.size = size;
-			return { done: false, value: exec(context) };
+			context.chunk.size = Math.abs(size);
+			context.chunk.skip = skip || 0;
+
+			return exec(context);
 		}
 	})
+	Object.defineProperty(_exec, "isMoving", {
+		value: () => (context.chunk.position < context.array.length && context.chunk.position >= 0)
+	})
+	Object.defineProperty(_exec, "fromZero", {
+		value: () => (context.chunk.position = 0)
+	})
 	Object.defineProperty(_exec, "walk", {
-		value: () => {
-			if (context.chunk.position == context.array.length) {
-				context.chunk = { size: 0, position: 0 };
-				return { done: true }
+		value: direction => {
+			if (direction < 0) {
+				if (context.hasReduce) throw new TypeError("Reverse iteration not supported with reduce")
+				context.reverse = true;
 			}
 			context.chunk.size = 1;
-			if (context.sequence[context.sequence.length - 1][0] === "reduce")
-				return { done: false, value: exec(context) };
-			return { done: false, value: exec(context)[0] }
+			if (context.hasReduce)
+				return exec(context);
+			return exec(context)[0]
 		}
 	})
 
 	Object.defineProperty(_exec, Symbol.iterator, {
 		value: () => ({
-			next: _exec.walk
+			next: () => {
+				if (context.chunk.position < context.array.length)
+					return {
+						done: false,
+						value: _exec.walk()
+					}
+				return { done: true }
+			}
 		})
 	})
 
@@ -68,7 +85,7 @@ function streamy(array, sequence) {
 
 	// chainable
 	Object.defineProperty(_exec, "fill", { value: ops.fillMap.bind(context) })
-	Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) })
+	// Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) })
 
 	return _exec
 
@@ -82,21 +99,21 @@ function appendOperation(key, predicate, modifier) {
 	}
 	let sequence = this.sequence.slice()
 	sequence.push([key, predicate, modifier, arguments])
-	return streamy(this.array, sequence); 
+	return streamy(this.array, sequence);
 }
 
-function Context(array, sequence){
+function Context(array, sequence) {
 	this.array = array || [];
 	this.sequence = sequence || [];
-	this.chunk = { size: 0, position: 0 };
+	this.chunk = { size: 0, position: -1 };
 	this.hasReduce = false;
 	this.hasForEach = false;
-	
-	this.sequence.forEach( operationParams => {
+
+	this.sequence.forEach(operationParams => {
 		switch (operationParams[0]) {
 			case "reduce":
 				this.hasReduce = true;
-				this.hasReduceInit = operationParams[3].length >= 3 
+				this.hasReduceInit = operationParams[3].length >= 3
 				break;
 			case "forEach":
 				this.hasForEach = true;

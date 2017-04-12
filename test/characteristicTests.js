@@ -123,24 +123,29 @@ describe(".apply(array) with an array as parameter", () => {
 describe(".chunk(n) with an integer as parameter", () => {
 	it("should return the next n results from the current cursor and pause.", () => {
 
-		let mapped = streamy(arr100).map(i => i * 1.5)
-		expect(mapped.chunk(5), "returns 1st 5 outputs").to.deep.equal({ done: false, value: [0, 1.5, 3, 4.5, 6] })
-		expect(mapped.chunk(4).value, "returns 5th to 10th result").to.deep.equal([7.5, 9, 10.5, 12])
-		expect(mapped(), "A normal exec call should not be affected by chunk() calls").to.deep.equal(arr100.map(i => i * 1.5))
-		expect(mapped.chunk(5).value, "internal cursor resets after an exec() call").to.deep.equal([0, 1.5, 3, 4.5, 6])
-		let arr = mapped.chunk(5).value
-		expect(mapped.apply(arr).chunk(2).value, "apply() call will reset internal cursor").to.deep.equal([11.25, 13.5])
-		expect(mapped.apply(arr).chunk(2).value, "apply() call with same array object will not reset internal cursor").to.deep.equal([15.75, 18])
-		expect(mapped.chunk(2).value, "chunk call with size > arr.length will return remaining").to.deep.equal([20.25])
-		expect(mapped.chunk(2), "returns done").to.deep.equal({ done: true })
+		let mapped = streamy(arr100).map(i => i * 1.5).filter(i=>i%2)
+		expect(mapped.chunk(5), "returns 1st 5 outputs").to.deep.equal([1.5, 3, 4.5, 7.5, 9])
+		expect(mapped.chunk(4), "returns 5th to 10th result").to.deep.equal([ 10.5, 13.5, 15, 16.5])
+		expect(mapped(), "A normal exec call should not be affected by chunk() calls").to.deep.equal(arr100.map(i => i * 1.5).filter(i=>i%2))
+		expect(mapped.chunk(5), "internal cursor resets after an exec() call").to.deep.equal([1.5, 3, 4.5, 7.5, 9])
+		expect(mapped.chunk(-5), "negative chunk size will traverse array backwards").to.deep.equal([10.5, 9, 7.5, 4.5, 3])
+		let arr = mapped.chunk(5,5)  // [ 10.5, 13.5, 15, 16.5, 19.5]
+		expect(arr, "chunk with a second (skip) param will skip through that many iterations").to.deep.equal([ 10.5, 13.5, 15, 16.5, 19.5])
+		expect(mapped.apply(arr).chunk(2), "apply() call will reset internal cursor").to.deep.equal([15.75, 20.25])
+		expect(mapped.chunk(-2,2), "skip on negative").to.deep.equal([15.75])		
+		expect(mapped.chunk(-2,2), "in reverse, after reaching 0 it should return empty array (or undefined if reducing)").to.deep.equal([])	
+
+		expect(mapped.apply(arr).chunk(2), "apply() call with same array object will not reset internal cursor").to.deep.equal([15.75,20.25])
+		expect(mapped.chunk(3), "chunk call with size > arr.length will return remaining").to.deep.equal([22.5, 24.75, 29.25])
+		expect(mapped.isMoving(), "returns done").to.equal(false)
 
 	})
 
 	it("should return intermediate accumulator value at current cursor position when used with reduce", () => {
 		let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 		let reduced = streamy(arr).reduce((acc, i) => acc + i, 1)
-		expect(reduced.chunk(5).value, "returns 1+Sum(0...4) = 11").to.equal(11)
-		expect(reduced.chunk(4).value, "returns 11 + Sum(5..8").to.equal(37)
+		expect(reduced.chunk(5), "returns 1+Sum(0...4) = 11").to.equal(11)
+		expect(reduced.chunk(4), "returns 11 + Sum(5..8").to.equal(37)
 		expect(reduced(), "A normal exec call should not be affected by chunk() calls").to.equal(arr.reduce((acc, i) => acc + i, 1))
 	})
 })
@@ -152,12 +157,20 @@ describe(".walk()", () => {
 	it("should return the next single result item from the current cursor and pause.", () => {
 
 		let mapped = streamy(arr100).map(i => i * 1.5) // [0, 1.5, 3, 4.5, 6]
-		expect(mapped.walk().value, "returns 1st output").to.equal(0)
-		expect(mapped.walk().value, "returns 2nd output").to.equal(1.5)
-		expect(mapped.chunk(3).value, "returns 3rd to 5th result").to.deep.equal([3, 4.5, 6])
-		expect(mapped.chunk(94), "returns 5th to 94th result").to.be.an("object")
-		expect(mapped.walk().value, "returns 1st output").to.equal(148.5)
-		expect(mapped.walk(), "returns done").to.deep.equal({ done: true })
+		expect(mapped.walk(), "returns 1st output").to.equal(0)
+		expect(mapped.walk(), "returns 2nd output").to.equal(1.5)
+		expect(mapped.chunk(3), "returns 3rd to 5th result").to.deep.equal([3, 4.5, 6])
+		expect(mapped.chunk(94).length, "returns 5th to 94th result").to.equal(94)
+		expect(mapped.isMoving(), "returns done").to.equal(true)
+		expect(mapped.walk(), "returns last output").to.equal(148.5)
+		expect(mapped.isMoving(), "returns done").to.equal(false)
+		expect(mapped.walk(-1), "returns last output").to.equal(148.5)
+		expect(mapped.walk(-1)).to.equal(147)
+		expect(mapped.isMoving(), "returns true").to.equal(true)
+		expect(mapped.walk()).to.equal(145.5)
+		expect(mapped.walk()).to.equal(147)
+		expect(mapped.walk()).to.equal(148.5)
+		expect(mapped.isMoving(), "returns false").to.equal(false)
 		//[ 7.5, 9, 10.5, 12])
 
 	})
@@ -165,8 +178,36 @@ describe(".walk()", () => {
 	it("should return intermediate accumulator value at current cursor position when used with reduce", () => {
 		let arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 		let reduced = streamy(arr).reduce((acc, i) => acc + i, 1)
-		expect(reduced.chunk(5).value, "returns 1+Sum(0...4) = 11").to.equal(11)
-		expect(reduced.walk().value, "walk will accumulate next item: 11 + 5 = 16").to.equal(16)
+		expect(reduced.chunk(5), "returns 1+Sum(0...4) = 11").to.equal(11)
+		expect(reduced.walk(), "walk will accumulate next item: 11 + 5 = 16").to.equal(16)
+	})
+})
+
+describe(".fromZero()", () => {
+	it("should reset the internal cursor to 0", () => {
+
+		let mapped = streamy(arr100).map(i => i * 1.5) // [0, 1.5, 3, 4.5, 6]
+		expect(mapped.walk(), "returns 1st output").to.equal(0)
+		expect(mapped.walk(), "returns 2nd output").to.equal(1.5)
+		expect(mapped.walk(), "returns 3nd output").to.equal(3)
+		mapped.fromZero()
+		expect(mapped.walk(), "returns 1st output").to.equal(0)
+		expect(mapped.chunk(4), "returns 2nd to 4th result").to.deep.equal([1.5, 3, 4.5,6])
+		expect(mapped.chunk(94).length, "returns 5th to 94th result").to.equal(94)
+		expect(mapped.isMoving(), "cursor at 99 returns true").to.equal(true)
+		expect(mapped.walk(), "returns last output").to.equal(148.5)
+		expect(mapped.isMoving(), "returns false").to.equal(false)
+
+		mapped.fromZero()
+		expect(mapped.walk(), "returns 1st output").to.equal(0)
+
+		expect(mapped.walk(-1), "returns 2nd output and moves cursor back").to.equal(1.5)
+		expect(mapped.walk(-1)).to.equal(0)
+		expect(mapped.isMoving(), "cursor is at -1, returns false").to.equal(false)
+		expect(mapped.walk()).to.equal(0)
+		expect(mapped.isMoving(), "cursor is at 1, returns true").to.equal(true)
+		//[ 7.5, 9, 10.5, 12])
+
 	})
 })
 
@@ -196,7 +237,6 @@ describe("Iterability", () => {
 		expect(foreachSum, "for-Of on reduce should return accumulated value on each iteration").to.equal(56)
 	})
 })
-
 
 
 // special cases

@@ -11,17 +11,17 @@ module.exports = {
 	},
 
 
-	/*
-	*		Pseudo Filter operations
-	*/
-	sliceFilter: function (begin, end) {
-		begin = begin || 0
-		// end = end || this.array.length
-		return this.appendOperation("filter", (element, index, stopNow) => {
-			if (index === end) stopNow();
-			return (begin <= index && (!end || index < end))
-		})
-	},
+	// /*
+	// *		Pseudo Filter operations
+	// */
+	// sliceFilter: function (begin, end) {
+	// 	begin = begin || 0
+	// 	// end = end || this.array.length
+	// 	return this.appendOperation("filter", (element, index, stopNow) => {
+	// 		if (index === end) stopNow();
+	// 		return (begin <= index && (!end || index < end))
+	// 	})
+	// },
 
 
 	/*
@@ -49,7 +49,7 @@ module.exports = {
 
 		return this.appendOperation("reduce", (accumulator, currentValue, currentIndex, stopNow) => {
 			if (accumulator > -1) return accumulator;
-			if (predicate(currentValue, currentIndex, array)) {
+			if (predicate(currentValue, currentIndex)) {
 				stopNow();
 				return currentIndex
 			}

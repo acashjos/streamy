@@ -1,44 +1,66 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.streamy = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
+// there is no more reverse().
+// you can chunk forward first and then chunk back. you can't go backwards from 0'
+// re-invoking after pointer reaches an end returns undefined, pointer will not wrap around 
+// should be able to walk back from the farther end after a non constrained exec()
+// in short, do not reset context.chunk.position 
+
 module.exports = function (context) {
+
+	// console.log("\n")
+	// console.log("**",result,context)
 
 	var array = context.array;
 	var arrayLen = array.length;
 	var sequence = context.sequence;
-	var seqLen = sequence.length;
+	var seqLen = sequence.length - 1;
 	var result = [];
-	var singleValue = false;
+	var singleValue = !!context.hasReduce;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
-	var frugal = true; // frugal flag will break execution when stopNow() is called
+	// var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
 	var accumulate;
 	var stageIndex;
-
+	var stepSize = 1;
 	var i = 0,
-	    j = 0;
-	if (!context.chunk.size || context.chunk.position == arrayLen) {
+	    j = 0,
+	    limit = arrayLen;
 
-		context.chunk.position = 0;
-		stageIndex = [];
-	} else {
+	// pre-requisite checks before executing
+	if (context.hasReduce && !context.hasReduceInit && !arrayLen) {
+		throw new TypeError('Reduce of empty array with no initial value');
+	}
+	if (context.chunk.size) {
 		accumulate = context.chunk.accumulate;
 		stageIndex = context.chunk.stageIndex || [];
 		i = context.chunk.position || 0;
+		limit = context.chunk.size + (context.chunk.skip || 0);
+	} else {
+		stageIndex = [];
+	}
+	if (context.reverse) {
+		stepSize = -1;
+		i = i >= arrayLen ? arrayLen - 1 : i;
+	} else {
+		i = i < 0 ? 0 : i;
 	}
 
-	function stopNow() {
-		stopIteration = frugal && true;
-	}
-	for (i; i < arrayLen; ++i) {
+	var stopNow = context.hasForEach ? function () {} : function () {
+		stopIteration = true;
+	};
+
+	for (i; i < arrayLen && limit && i >= 0; i = i + stepSize) {
 		pass = array[i];
 		skip = false;
-
-		if (context.chunk.size && typeof stageIndex[seqLen - 1] != "undefined" && context.chunk.position + context.chunk.size == stageIndex[seqLen - 1] + 1) break;
-		for (j = 0; j < seqLen; ++j) {
+		// if (context.chunk.size
+		// 	&& typeof stageIndex[seqLen] != "undefined"
+		// 	&& limit == stageIndex[seqLen] + 1) break;
+		for (j = 0; j <= seqLen; ++j) {
 
 			stageIndex[j] = stageIndex[j] === undefined ? -1 : stageIndex[j];
-			stageIndex[j] += 1;
+			stageIndex[j] += stepSize;
 			// if(chainBreak) throw new TypeError('Non-iterable stages are not chainable');
 			key = sequence[j][0];
 			predicate = sequence[j][1];
@@ -51,14 +73,14 @@ module.exports = function (context) {
 					{
 						if (!predicate.call(modifier, pass, stageIndex[j], stopNow)) {
 							skip = true;
-							// stageIndex[j]--;
+							limit++;
 							j = seqLen; // break after this iteration
 						}
 						break;
 					}
 				case "forEach":
 					{
-						frugal = false; // frugal causes to stop iteration on stopNow(). this will affect foreach
+						// frugal = false;	// frugal causes to stop iteration on stopNow(). this will affect foreach
 						predicate.call(modifier, pass, stageIndex[j], stopNow);
 						break;
 					}
@@ -71,7 +93,7 @@ module.exports = function (context) {
 				case "reduce":
 					{
 						skip = true;
-						singleValue = true;
+						// singleValue = true;
 						if (stageIndex[j] === 0) {
 							if (args.length < 3) {
 								accumulate = pass;
@@ -85,20 +107,32 @@ module.exports = function (context) {
 					}
 			}
 		}
-		if (!skip) result.push(pass);
+		limit--;
+		// console.log("i: %s",i,context.chunk.skip,limit,'>=',context.chunk.size , !skip , !singleValue)
+		if (context.chunk.size && limit >= context.chunk.size) continue;
+		if (!skip && !singleValue) result.push(pass);
+		// console.log("-",result,!skip && !singleValue)
 		if (stopIteration) break;
 	}
+	// console.log("**",result,singleValue,accumulate)
 
+	if (context.chunk.size) {
+		context.chunk.position = i;
+		context.chunk.accumulate = accumulate;
+		context.chunk.stageIndex = stageIndex;
+	} else {
+		context.chunk = { size: 0, position: 0 };
+	}
 	context.chunk.size = 0;
-	context.chunk.position = i;
-	context.chunk.accumulate = accumulate;
-	context.chunk.stageIndex = stageIndex;
+	context.reverse = false;
 
 	if (singleValue) return accumulate;
 	return result;
 };
 
 },{}],2:[function(require,module,exports){
+"use strict";
+
 module.exports = {
 	/*
  *		Pseudo Map operations
@@ -178,46 +212,72 @@ module.exports = {
 },{}],3:[function(require,module,exports){
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var exec = require("./executor");
 var ops = require("./pseudoOperations");
 
 function streamy(array, sequence) {
 	if (sequence && !Array.isArray(sequence)) throw new TypeError('Expected sequence to be an Array');
-	sequence = sequence || [];
-	var context = {
-		array: array || [],
-		sequence: sequence,
-		chunk: { size: 0, position: 0 }
-	};
+	// sequence = sequence || [];
+	var context = new Context(array, sequence);
 
 	context.appendOperation = appendOperation.bind(context);
 	var _exec = function _exec(arr) {
-		return exec(Array.isArray(arr) ? { array: arr, sequence: context.sequence, chunk: { size: 0, position: 0 } } : context);
+		return exec(Array.isArray(arr) ? new Context(arr, context.sequence) : context);
 	};
 
 	// modifiers
-	Object.defineProperty(_exec, "apply", { value: function value(arr) {
+	Object.defineProperty(_exec, "apply", {
+		value: function value(arr) {
+			if (!Array.isArray(arr)) {
+				throw new TypeError(".apply() expected an array. got " + (typeof arr === "undefined" ? "undefined" : _typeof(arr)));
+			}
 			if (context.array == arr) return _exec;
 			context.array = arr;
-			context.chunk = { size: 0, position: 0 };
+			context.chunk = { size: 0, position: -1 };
 			return _exec;
-		} });
-	Object.defineProperty(_exec, "chunk", { value: function value(size) {
-			context.chunk.size = size;
+		}
+	});
+	Object.defineProperty(_exec, "chunk", {
+		value: function value(size, skip) {
+
+			if (size < 0) {
+				if (context.hasReduce) throw new TypeError("Reverse iteration not supported with reduce");
+				context.reverse = true;
+			}
+			context.chunk.size = Math.abs(size);
+			context.chunk.skip = skip || 0;
+
 			return exec(context);
-		} });
-	Object.defineProperty(_exec, "walk", { value: function value() {
-			if (context.sequence[context.sequence.length - 1][0] === "reduce") return _exec.chunk(1);
-			return _exec.chunk(1)[0];
-		} });
-	Object.defineProperty(_exec, Symbol.iterator, { value: function value() {
+		}
+	});
+	Object.defineProperty(_exec, "walk", {
+		value: function value() {
+			context.chunk.size = 1;
+			if (context.hasReduce) return exec(context);
+			return exec(context)[0];
+		}
+	});
+	Object.defineProperty(_exec, "isMoving", {
+		value: function value() {
+			return context.chunk.position < context.array.length && context.chunk.position >= 0;
+		}
+	});
+
+	Object.defineProperty(_exec, Symbol.iterator, {
+		value: function value() {
 			return {
 				next: function next() {
-					if (context.chunk.position == context.array.length) return { done: true };
-					return { done: false, value: _exec.walk(1) };
+					if (context.chunk.position < context.array.length) return {
+						done: false,
+						value: _exec.walk()
+					};
+					return { done: true };
 				}
 			};
-		} });
+		}
+	});
 
 	//primary ops
 	Object.defineProperty(_exec, "filter", { value: appendOperation.bind(context, "filter") });
@@ -236,19 +296,38 @@ function streamy(array, sequence) {
 	Object.defineProperty(_exec, "fill", { value: ops.fillMap.bind(context) });
 	Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) });
 
-	// keys() | values()
 	return _exec;
 }
 
 function appendOperation(key, predicate, modifier) {
-	if (key === "reduce" && arguments.length < 3 && this.array.length == 0) {
-		throw new TypeError('Reduce of empty array with no initial value');
-	} else if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
+	if (this.sequence.length && this.sequence[this.sequence.length - 1][0] === "reduce") {
 		throw new TypeError('Non-iterable stages are not chainable');
 	}
 	var sequence = this.sequence.slice();
 	sequence.push([key, predicate, modifier, arguments]);
-	return streamy(this.array, sequence); //*/ this.exec;
+	return streamy(this.array, sequence);
+}
+
+function Context(array, sequence) {
+	var _this = this;
+
+	this.array = array || [];
+	this.sequence = sequence || [];
+	this.chunk = { size: 0, position: -1 };
+	this.hasReduce = false;
+	this.hasForEach = false;
+
+	this.sequence.forEach(function (operationParams) {
+		switch (operationParams[0]) {
+			case "reduce":
+				_this.hasReduce = true;
+				_this.hasReduceInit = operationParams[3].length >= 3;
+				break;
+			case "forEach":
+				_this.hasForEach = true;
+				break;
+		}
+	});
 }
 
 module.exports = streamy;
