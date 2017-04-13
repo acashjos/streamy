@@ -14,7 +14,7 @@
 
         $ npm install http://github.com/acashjos/streamy/tarball/master
 
-[![NPM](https://nodei.co/npm/streamy.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
+[![NPM](https://nodei.co/npm/streamyjs.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
 ## Features
 
