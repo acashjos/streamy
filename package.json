@@ -1,6 +1,6 @@
 {
   "name": "streamyjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An array manipulation tool to map,filter,reduce as a stream aggregation.",
   "main": "index.js",
   "scripts": {
