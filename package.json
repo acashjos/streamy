@@ -1,13 +1,13 @@
 {
   "name": "streamyjs",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "An array manipulation tool to map,filter,reduce as a stream aggregation.",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha ./test",
     "build": "npm run build:clean && npm run build:min",
-    "build:min": "uglifyjs ./dist/bundle.js -m -c -o ./dist/bundle.min.js",
-    "build:clean": "browserify ./src/streamy.js -t babelify -o ./dist/bundle.js -s streamy"
+    "build:min": "uglifyjs ./dist/streamy.js -m -c -o ./dist/streamy.min.js",
+    "build:clean": "browserify ./src/streamy.js -t babelify -o ./dist/streamy.js -s streamy"
   },
   "keywords": [
     "Array",
@@ -17,7 +17,7 @@
     "aggregation"
   ],
   "author": "Akash Kurian Jose",
-  "license": "ISC",
+  "license": "MIT",
   "babel": {
     "presets": [
       [

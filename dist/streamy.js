@@ -1,16 +1,7 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.streamy = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
-// there is no more reverse().
-// you can chunk forward first and then chunk back. you can't go backwards from 0'
-// re-invoking after pointer reaches an end returns undefined, pointer will not wrap around 
-// should be able to walk back from the farther end after a non constrained exec()
-// in short, do not reset context.chunk.position 
-
 module.exports = function (context) {
-
-	// console.log("\n")
-	// console.log("**",result,context)
 
 	var array = context.array;
 	var arrayLen = array.length;
@@ -20,7 +11,6 @@ module.exports = function (context) {
 	var singleValue = !!context.hasReduce;
 	var pass, skip, key, predicate, modifier, args;
 	var stopIteration = false;
-	// var frugal = true; // invoking stopNow() breaks execution loop when frugal is true
 	var accumulate;
 	var stageIndex;
 	var stepSize = 1;
@@ -30,7 +20,7 @@ module.exports = function (context) {
 
 	// pre-requisite checks before executing
 	if (context.hasReduce && !context.hasReduceInit && !arrayLen) {
-		throw new TypeError('Reduce of empty array with no initial value');
+		throw new TypeError('reduce of empty array with no initial value');
 	}
 	if (context.chunk.size) {
 		accumulate = context.chunk.accumulate;
@@ -108,13 +98,10 @@ module.exports = function (context) {
 			}
 		}
 		limit--;
-		// console.log("i: %s",i,context.chunk.skip,limit,'>=',context.chunk.size , !skip , !singleValue)
 		if (context.chunk.size && limit >= context.chunk.size) continue;
 		if (!skip && !singleValue) result.push(pass);
-		// console.log("-",result,!skip && !singleValue)
 		if (stopIteration) break;
 	}
-	// console.log("**",result,singleValue,accumulate)
 
 	if (context.chunk.size) {
 		context.chunk.position = i;
@@ -145,17 +132,18 @@ module.exports = {
 		});
 	},
 
-	/*
- *		Pseudo Filter operations
- */
-	sliceFilter: function sliceFilter(begin, end) {
-		begin = begin || 0;
-		// end = end || this.array.length
-		return this.appendOperation("filter", function (element, index, stopNow) {
-			if (index === end) stopNow();
-			return begin <= index && (!end || index < end);
-		});
-	},
+	// /*
+	// *		Pseudo Filter operations
+	// */
+	// sliceFilter: function (begin, end) {
+	// 	begin = begin || 0
+	// 	// end = end || this.array.length
+	// 	return this.appendOperation("filter", (element, index, stopNow) => {
+	// 		if (index === end) stopNow();
+	// 		return (begin <= index && (!end || index < end))
+	// 	})
+	// },
+
 
 	/*
  *		Pseudo Reduce operations
@@ -182,7 +170,7 @@ module.exports = {
 
 		return this.appendOperation("reduce", function (accumulator, currentValue, currentIndex, stopNow) {
 			if (accumulator > -1) return accumulator;
-			if (predicate(currentValue, currentIndex, array)) {
+			if (predicate(currentValue, currentIndex)) {
 				stopNow();
 				return currentIndex;
 			}
@@ -252,16 +240,25 @@ function streamy(array, sequence) {
 			return exec(context);
 		}
 	});
-	Object.defineProperty(_exec, "walk", {
-		value: function value() {
-			context.chunk.size = 1;
-			if (context.hasReduce) return exec(context);
-			return exec(context)[0];
-		}
-	});
 	Object.defineProperty(_exec, "isMoving", {
 		value: function value() {
 			return context.chunk.position < context.array.length && context.chunk.position >= 0;
+		}
+	});
+	Object.defineProperty(_exec, "fromZero", {
+		value: function value() {
+			return context.chunk.position = 0;
+		}
+	});
+	Object.defineProperty(_exec, "walk", {
+		value: function value(direction) {
+			if (direction < 0) {
+				if (context.hasReduce) throw new TypeError("Reverse iteration not supported with reduce");
+				context.reverse = true;
+			}
+			context.chunk.size = 1;
+			if (context.hasReduce) return exec(context);
+			return exec(context)[0];
 		}
 	});
 
@@ -294,7 +291,7 @@ function streamy(array, sequence) {
 
 	// chainable
 	Object.defineProperty(_exec, "fill", { value: ops.fillMap.bind(context) });
-	Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) });
+	// Object.defineProperty(_exec, "slice", { value: ops.sliceFilter.bind(context) })
 
 	return _exec;
 }

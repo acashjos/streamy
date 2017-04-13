@@ -223,8 +223,43 @@ Resets the internal cursor to 0
 Walks through the array one result at a time. Every walk call will return one result as long as the cursor is moving. It keeps iterating until next result is obtained.
 **direction**(optional), when a negative integer, walks the array reverse. Reverse walking is possible only after the cursor has moved forward atleast once.
 
+---
 
 ## Gotchas
 1) Every chain should terminate with an empty `()`. Execution will only commence after that.
 2) With streamy, `foreach` **do not** terminate chaining. You can chain multiple `foreach` blocks or even add a `reduce` block after a `foreach`.
 3) Unlike native function, which usually have a function signature similar to `(..., element, index, array..)`, streamy operations will not provide an `array`. It will however provide ` element, index` parameters. The `index` provided is calculated to match the index of a virtual array that the previous operations could have generated. In other words, `element` and `index` are exactly the same as what you'd get when using native array operations
+
+---
+## Development
+Questions, problems or suggestions? Please post them on the [issue tracker](https://github.com/acashjos/streamy/issues).
+
+You can contribute changes by forking the project and submitting a pull request.  Feel free to contribute :heart_eyes:
+> Expects contributions to include proper testing
+
+---
+
+## License
+
+(The MIT License)
+
+Copyright (c) 2017 Akash Kurian Jose &lt;acashjos@outlook.com&gt;
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
