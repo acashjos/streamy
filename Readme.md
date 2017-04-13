@@ -8,13 +8,13 @@
 
   - Latest release:
 
-        $ npm install streamy
+        $ npm install streamyjs
 
   - Master branch:
 
         $ npm install http://github.com/acashjos/streamy/tarball/master
 
-[![NPM](https://nodei.co/npm/streamy.png?downloads=true&stars=true)](https://nodei.co/npm/streamy/)
+[![NPM](https://nodei.co/npm/streamy.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
 ## Features
 
