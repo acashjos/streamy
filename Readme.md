@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/acashjos/streamy.svg?branch=master)](https://travis-ci.org/acashjos/streamy)
 
-Streamy is a set of array operations implemented in a vertical first fashion
+*streamy* is a set of array operations implemented in a vertical first fashion
 
 ## Installation
 
@@ -55,7 +55,7 @@ ops([1,9,25]) // [1+3+5] = 9
 ## What is streamy?
 Conventionally an operation like `array.filter(...).map(...).slice(..)` would perform 3 iterations, create an `array` after each iteration.
 
-*streamy* is an attempt to solve it in a different way. With streamy, chaining prepares the execution logic and returns a function allowing a lazy evaluation. streamy linearizes the logic such that it executes the entire operation stack in a single go, creating an array just once. 
+*streamy* is an attempt to solve it in a different way. With *streamy*, chaining prepares the execution logic and returns a function allowing a lazy evaluation. *streamy* linearizes the logic such that it executes the entire operation stack in a single go, creating an array just once. 
 ```
   ## Native ##                            ## Streamy ##
 
@@ -69,7 +69,7 @@ op3       ->  ->  ->  ->  ->                      v   v   v   v   v
                                                   v   v   v   v   v
 ```
 ## Why Streamy
-Streamy is a different approach, not necessarily a better approach for every use case. Some of the objectives achieved by *streamy* which I find desirable are:
+*streamy* is a different approach, not necessarily a better approach for every use case. Some of the objectives achieved by *streamy* which I find desirable are:
 - Lazy evaluation
 - Ability to return earlier with minimum iterations/operations performed
 - Iterability
@@ -77,9 +77,9 @@ Streamy is a different approach, not necessarily a better approach for every use
 - Partial execution
 - Arguably a better execution time in chrome and NodeJs.
 
-> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing `Streamy` for speed "benefits". However `streamy` tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing *streamy* for speed "benefits". However *streamy* tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
 
-You should consider streamy if you handle huge arrays and:
+You should consider *streamy* if you handle huge arrays and:
 - have to implement a complex custom `forEach` to modify your array,
 - just need a part of the result at a time.
 - have to iterate over the result.
@@ -108,13 +108,13 @@ You should consider streamy if you handle huge arrays and:
 - resetPointer
 - walk
 
-> In addition streamy also implements `Symbol.iterator` function to enable *Iterability*
+> In addition *streamy* also implements `Symbol.iterator` function to enable *Iterability*
 
 
 # API
 > Sample code used are originally published in [MDN array documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) licenced under [CC-BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/)
 
-> Most examples in MDN are compatible with streamy as well, except for a few [gotchas](#gotchas)
+> Most examples in MDN are compatible with *streamy* as well, except for a few [gotchas](#gotchas)
 ## Base operations
 ---
 ## filter(predicateFn, thisArg)
@@ -196,7 +196,8 @@ streamy(arr).some(predicateFn[, thisArg])();
 ## Behaviour modifier functions
 ---
 ## apply(array)
-Changes the array attached to a streamy object.
+Changes the array attached to a *streamy* object.
+returns current *streamy* object so that it can be chained by another modifier function.
 ```js
 // syntax:
 var operation = streamy([1,2,3]).map( i => i*2);
@@ -207,7 +208,7 @@ operation() // is [8, 10, 12]
 ```
 ## chunk(size [, skip])
 Walks through the array returning next `size` results. Every chunk call will return result as long as the cursor is moving. It keeps iterating until next result is obtained.
-`size` when a negative integer, walks the array reverse. Reverse walking is possible only after the cursor has moved forward atleast once.
+`size` when a negative integer, walks the array reverse. Reverse walking is possible only after the cursor has moved forward at least once.
 > Reverse walking throws error when there is a reduce in the operation chain
 
 
@@ -217,22 +218,22 @@ Walks through the array returning next `size` results. Every chunk call will ret
 Returns `false` when the iterator cursor has reached the end of iteration. Returns `true` otherwise
 
 ## fromZero()
-Resets the internal cursor to 0
-
+Resets the internal cursor to 0.
+returns current *streamy* object so that it can be chained by another modifier function.
 ## walk([direction])
 Walks through the array one result at a time. Every walk call will return one result as long as the cursor is moving. It keeps iterating until next result is obtained.
-**direction**(optional), when a negative integer, walks the array reverse. Reverse walking is possible only after the cursor has moved forward atleast once.
+**direction**(optional), when a negative integer, walks the array reverse. Reverse walking is possible only after the cursor has moved forward at least once.
 
 ---
 
 ## Gotchas
 1) Every chain should terminate with an empty `()`. Execution will only commence after that.
-2) With streamy, `foreach` **do not** terminate chaining. You can chain multiple `foreach` blocks or even add a `reduce` block after a `foreach`.
+2) With *streamy*, `foreach` **do not** terminate chaining. It is possible to interweave 
 3) Unlike native function, which usually have a function signature similar to `(..., element, index, array..)`, streamy operations will not provide an `array`. It will however provide ` element, index` parameters. The `index` provided is calculated to match the index of a virtual array that the previous operations could have generated. In other words, `element` and `index` are exactly the same as what you'd get when using native array operations
 
 ---
 ## Development
-Questions, problems or suggestions? Please post them on the [issue tracker](https://github.com/acashjos/streamy/issues).
+Questions, problems or suggestions? Please post them on the [issue tracker](https://github.com/acashjos/*streamy*/issues).
 
 You can contribute changes by forking the project and submitting a pull request.  Feel free to contribute :heart_eyes:
 > Expects contributions to include proper testing

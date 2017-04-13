@@ -198,8 +198,8 @@ describe(".fromZero()", () => {
 		expect(mapped.walk(), "returns last output").to.equal(148.5)
 		expect(mapped.isMoving(), "returns false").to.equal(false)
 
-		mapped.fromZero()
-		expect(mapped.walk(), "returns 1st output").to.equal(0)
+		
+		expect(mapped.fromZero().walk(), "walk chained to fromZero: returns 1st output").to.equal(0)
 
 		expect(mapped.walk(-1), "returns 2nd output and moves cursor back").to.equal(1.5)
 		expect(mapped.walk(-1)).to.equal(0)

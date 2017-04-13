@@ -42,7 +42,10 @@ function streamy(array, sequence) {
 		value: () => (context.chunk.position < context.array.length && context.chunk.position >= 0)
 	})
 	Object.defineProperty(_exec, "fromZero", {
-		value: () => (context.chunk.position = 0)
+		value: () => {
+			context.chunk.position = 0
+			return _exec;
+		}
 	})
 	Object.defineProperty(_exec, "walk", {
 		value: direction => {
