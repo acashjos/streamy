@@ -247,7 +247,8 @@ function streamy(array, sequence) {
 	});
 	Object.defineProperty(_exec, "fromZero", {
 		value: function value() {
-			return context.chunk.position = 0;
+			context.chunk.position = 0;
+			return _exec;
 		}
 	});
 	Object.defineProperty(_exec, "walk", {
