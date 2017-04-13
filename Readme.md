@@ -235,7 +235,7 @@ Walks through the array one result at a time. Every walk call will return one re
 ## Development
 Questions, problems or suggestions? Please post them on the [issue tracker](https://github.com/acashjos/*streamy*/issues).
 
-You can contribute changes by forking the project and submitting a pull request.  Feel free to contribute :heart_eyes:
+You can contribute by forking the project and submitting a pull request. Make sure to run it through the issue-tracker as a feature request before implementing new features.  Feel free to contribute :heart_eyes:
 > Expects contributions to include proper testing
 
 ---
