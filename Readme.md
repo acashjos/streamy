@@ -1,6 +1,7 @@
 # Streamy
 
 [![Build Status](https://travis-ci.org/acashjos/streamy.svg?branch=master)](https://travis-ci.org/acashjos/streamy)
+[![npm version](https://badge.fury.io/js/streamyjs.svg)](https://badge.fury.io/js/streamyjs)
 
 *streamy* is a set of array operations implemented in a vertical first fashion
 
@@ -9,23 +10,23 @@
   - Latest release:
 
         $ npm install streamyjs
+        
+      [![NPM](https://nodei.co/npm/streamyjs.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
   - Master branch:
 
         $ npm install http://github.com/acashjos/streamy/tarball/master
 
-[![NPM](https://nodei.co/npm/streamyjs.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
 ## Features
 
   - Multiple array operations in a single loop
-  - Performance improvement in V8
+  - Performance improvement in V8 Engine
   - Partial execution
   - Iterable
   - Iterate in chunks
   - Non-terminating foreach
-  - Familiar usages
-  - Maximum compatibility with native implementation
+  - Familiar API
   
 ## Basic usage
 ```js
@@ -77,7 +78,8 @@ op3       ->  ->  ->  ->  ->                      v   v   v   v   v
 - Partial execution
 - Arguably a better execution time in chrome and NodeJs.
 
-> Better execution time in V8 Engine is probably due to implementation difference. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing *streamy* for speed "benefits". However *streamy* tends to be consistent in execution time and gives similar figures across browsers on repeated runs.
+> Better execution time in NodeJS, Chrome and Safari are probably due to implementation differences. This could change in future. Native array functions perform much better in Firefox and Edge. I would not recommend choosing *streamy* for speed "benefits".
+Check out this [jspref](https://jsperf.com/streamyjs-native-comparison/1) to try it yourself.
 
 You should consider *streamy* if you handle huge arrays and:
 - have to implement a complex custom `forEach` to modify your array,
@@ -115,6 +117,8 @@ You should consider *streamy* if you handle huge arrays and:
 > Sample code used are originally published in [MDN array documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) licenced under [CC-BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/)
 
 > Most examples in MDN are compatible with *streamy* as well, except for a few [gotchas](#gotchas)
+
+>See [`test/`](https://github.com/acashjos/streamy/tree/master/test) to find more usage examples.
 ## Base operations
 ---
 ## filter(predicateFn, thisArg)
