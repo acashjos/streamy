@@ -1,6 +1,7 @@
 # Streamy
 
 [![Build Status](https://travis-ci.org/acashjos/streamy.svg?branch=master)](https://travis-ci.org/acashjos/streamy)
+[![npm version](https://badge.fury.io/js/streamyjs.svg)](https://badge.fury.io/js/streamyjs)
 
 *streamy* is a set of array operations implemented in a vertical first fashion
 
@@ -9,12 +10,13 @@
   - Latest release:
 
         $ npm install streamyjs
+        
+      [![NPM](https://nodei.co/npm/streamyjs.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
   - Master branch:
 
         $ npm install http://github.com/acashjos/streamy/tarball/master
 
-[![NPM](https://nodei.co/npm/streamyjs.png?downloads=true&stars=true)](https://nodei.co/npm/streamyjs/)
 
 ## Features
 
